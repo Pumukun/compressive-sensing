@@ -48,7 +48,7 @@ def SaltAndPepperNoise(image_path, show=True, number_of_pixels=1000):
         plt.xticks([]), plt.yticks([])
         plt.show()
 
-    return image
+    return noisy
 
 def SpeckleNoise(image_path, show=True, variance=0.1):
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
