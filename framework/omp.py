@@ -39,6 +39,7 @@ def omp(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray:
     return img_rec
 
 
+
 def dct(N: int) -> np.ndarray:
     mat_dct_1d: np.ndarray = np.zeros((N, N))
     v = range(N)
@@ -52,6 +53,7 @@ def dct(N: int) -> np.ndarray:
         mat_dct_1d[:, k] = dct_1d / np.linalg.norm(dct_1d)
 
     return mat_dct_1d
+
 
 
 def cs_omp(y: np.ndarray, Phi: np.ndarray, K: int) -> Tuple[np.ndarray, Tuple[np.ndarray, ...]]:    
