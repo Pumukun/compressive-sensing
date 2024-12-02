@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         k = 10
 
         rec = o.omp(fname_E, o.dct(256), m, k)
-        cv2.imwrite(f"tmp/lena_omp.png", rec)
+        cv2.imwrite(f"tmp/lena_omp.png", rec.get_Image())
 
         fname_omp = "tmp/lena_omp.png"
         cvImg = cv2.imread(fname_omp)

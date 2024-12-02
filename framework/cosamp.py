@@ -1,10 +1,12 @@
 import numpy as np
 import cv2
 import math
-import utils
+import metrics
+
+from utils import ImageCS
 from typing import Tuple
 
-def cosamp(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray:
+def cosamp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     H, W = image.shape
     N = H
@@ -27,12 +29,12 @@ def cosamp(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray:
 
     img_rec = np.dot(matrix, sparse_rec_1d)
 
-    cr: float = utils.compression_ratio(image, sparse_rec_1d)
-    PSNR: float = utils.PSNR(image, img_rec)
-    print("cr:  ", cr)
-    print("PSNR:", PSNR)
+    CR: float = metrics.CR(image, sparse_rec_1d)
+    PSNR: float = metrics.PSNR(image, img_rec)
 
-    return img_rec
+    img_res = ImageCS(img_rec, cr=CR, psnr=PSNR)
+
+    return img_res
 
 def cs_cosamp(y: np.ndarray, Phi: np.ndarray, K: int) -> Tuple[np.ndarray, np.ndarray]:    
     residual: np.ndarray = y

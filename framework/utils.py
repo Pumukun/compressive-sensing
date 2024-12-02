@@ -2,32 +2,36 @@ from math import log10, sqrt
 import numpy as np
 import cv2
 
-from typing import Tuple
+class ImageCS():
+    def __init__(self, matrix=np.ndarray((0,0)), cr: float=0.0, psnr: float=0.0, ssim: float=0.0):
+        self.__matrix = matrix
+        self.__cr: float = cr
+        self.__psnr: float = psnr
+        self.__ssim: float = ssim
 
-def PSNR(original, compressed):
-    mse = np.mean((original - compressed) ** 2)
-    if (mse == 0):
-        return 100
-    max_pixel = 255.0
-    psnr = 20 * log10(max_pixel / sqrt(mse))
-    return psnr
+    def get_Image(self) -> np.ndarray:
+        return self.__matrix
 
-def compression_ratio(image_source: np.ndarray, image_compressed: np.ndarray, print_image_array = False) -> float:
-    if print_image_array:
-        print("source:\n", image_source)
-        print("comressed:\n", image_compressed)
-    
-    nonzero_source: Tuple[np.ndarray, ...] = image_source.nonzero()
-    nonzero_compressed: Tuple[np.ndarray, ...] = image_compressed.nonzero()
+    def get_CR(self) -> float:
+        return self.__cr
 
-    source_count: int = 0
-    compressed_count: int = 0
+    def get_PSNR(self) -> float:
+        return self.__psnr
 
-    for i in nonzero_source:
-        source_count += i.size
+    def get_SSIM(self) -> float:
+        return self.__ssim
 
-    for i in nonzero_compressed:
-        compressed_count += i.size
 
-    return source_count / compressed_count
+    def set_Image(self, image: np.ndarray) -> None:
+        self.__matrix = image
+
+    def set_CR(self, cr) -> None:
+        self.__cr = cr
+
+    def set_PSNR(self, psnr) -> None:
+        self.__psnr = psnr
+
+    def set_SSIM(self, ssim) -> None:
+        self.__ssim = ssim
+
 
