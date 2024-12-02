@@ -1,9 +1,9 @@
 import numpy as np
 import cv2
 import math
-import metrics
+import framework.metrics as metrics
 
-from utils import ImageCS
+from framework.utils import ImageCS
 from typing import Tuple
 
 def cosamp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:

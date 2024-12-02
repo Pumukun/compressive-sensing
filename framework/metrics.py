@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple
 from math import log10, sqrt
 import cv2
-from skimage.metrics import structural_similarity as ssim
+#from skimage.metrics import structural_similarity as ssim
 
 
 def PSNR(original, compressed):
@@ -37,6 +37,7 @@ def CR(image_source: np.ndarray, image_compressed: np.ndarray, print_image_array
 def SSIM(original_path, compressed_path):
     original = cv.imread(original_path, cv.IMREAD_GRAYSCALE)
     compressed = cv.imread(compressed_path, cv.IMREAD_GRAYSCALE)
-    metric = ssim(original, compressed)
+    #metric = ssim(original, compressed)
+    metric = None
 
     return metric

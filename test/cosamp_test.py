@@ -1,15 +1,13 @@
-import omp as o
-import cosamp as co
 import numpy as np
 import cv2
 
-# rec = o.omp("../test.jpg", o.dct(256), 256, 50)
-# rec = o.omp("../test.jpg", np.random.normal(0, 256), 256, 50)
+from framework import ImageCS, cosamp, dct
 
-M = [32, 64, 128, 256]
-K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
+#M = [32, 64, 128, 256]
+#K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
 
-#rec = o.omp("../lena.png", o.dct(256), 256, 5)
+M = [128]
+K = [20]
 
 im_cnt = 0
 for m in M:
@@ -18,8 +16,9 @@ for m in M:
         print("M:   ", m)
         print("K:   ", k)
 
-        rec = co.cosamp("../lena.png", o.dct(256), m, k)
-        cv2.imwrite(f"lena_cosamp_M{M}_K{K}.png", rec)
+        rec = cosamp("../lena.png", dct(256), m, k)
+        cv2.imwrite(f"lena_cosamp_M{m}_K{k}.png", rec.get_Image())
+        print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
 
         im_cnt += 1
 

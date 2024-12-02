@@ -1,16 +1,14 @@
 import numpy as np
 import cv2
 import math
-import metrics
+import framework.metrics as metrics
 
-from utils import ImageCS
+from framework.utils import ImageCS
 from typing import Tuple
 
 
 def omp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    # print("image size:", image.shape)
-
     H, W = image.shape
     N = H
 
@@ -27,7 +25,7 @@ def omp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
             print('iteration: ', i)
 
         y = np.reshape(img_cs_1d[:, i], (M, 1))
-        column_rec, Candidate = cs_omp(y, Theta_1d,K)
+        column_rec, Candidate = cs_omp(y, Theta_1d, K)
         x_pre = np.reshape(column_rec, (N))
         sparse_rec_1d[:, i] = x_pre
 
