@@ -19,8 +19,8 @@ def cosamp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     Theta_1d = np.dot(Phi, matrix)
 
     for i in range(N):
-        if i % 50 == 0:
-            print('iteration: ', i)
+        #if i % 50 == 0:
+        #    print('iteration: ', i)
 
         y = np.reshape(img_cs_1d[:, i],(M, 1))
         column_rec, Candidate = cs_cosamp(y, Theta_1d, K)
