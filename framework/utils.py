@@ -33,5 +33,3 @@ class ImageCS():
 
     def set_SSIM(self, ssim) -> None:
         self.__ssim = ssim
-
-
