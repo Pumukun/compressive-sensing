@@ -1,16 +1,19 @@
+import PIL.Image
 import numpy as np
 import cv2
 import math
 import framework.metrics as metrics
-
+import PIL
 from framework.utils import ImageCS
 
 from framework.omp import cs_omp
 from framework.sp import cs_sp
 
 def brgp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    H, W = image.shape
+    # image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image = PIL.Image.open(image_path)
+    image = image.convert("L")
+    H, W = image.height, image.width
     N = H
 
     im = np.array(image)
@@ -34,8 +37,8 @@ def brgp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
 
     img_rec = np.dot(matrix, sparse_rec_1d)
 
-    CR: float = metrics.CR(image, sparse_rec_1d)
-    PSNR: float = metrics.PSNR(image, img_rec)
+    CR: float = metrics.CR(im, sparse_rec_1d)
+    PSNR: float = metrics.PSNR(im, img_rec)
 
     img_res = ImageCS(img_rec, cr=CR, psnr=PSNR)
 

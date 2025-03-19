@@ -59,10 +59,17 @@ def update_result(result_id, pwd, algorithm, psnr, cr, k, m, height, width):
     conn.commit()
     conn.close()
 
-def delete_result(result_id):
+def delete_result(result_alg):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM results WHERE id = ?', (result_id,))
+    cursor.execute('DELETE FROM results WHERE algorithm	 = ?', (result_alg,))
+    conn.commit()
+    conn.close()
+
+def delete_all():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM results')
     conn.commit()
     conn.close()
 

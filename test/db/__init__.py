@@ -5,7 +5,8 @@ from .db import (
     get_all_results,
     get_result_by_id,
     update_result,
-    delete_result
+    delete_result,
+    delete_all
 )
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     'get_all_results',
     'get_result_by_id',
     'update_result',
-    'delete_result'
+    'delete_result',
+    'delete_all'
 ]
