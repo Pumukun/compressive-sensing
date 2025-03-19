@@ -10,7 +10,7 @@ from framework import ImageCS, omp, dct
 #M = [128]
 #K = [20]
 
-M = [32, 64, 128]
+M = [128]
 K = range(10, 50, 2)
 
 mm = []
@@ -42,8 +42,10 @@ print("psnr = ", psnr)
 print("cr = ", cr)
 
 
-for i in range(0, len(M)):
-    plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
+# for i in range(0, len(M)):
+#     plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
+
+plt.plot(cr, psnr, marker="o")
 
 plt.xlabel("K")
 plt.ylabel("PSNR")

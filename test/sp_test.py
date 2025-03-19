@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import cv2
 
-from framework import ImageCS, cosamp, dct
+from framework import ImageCS, sp, dct
 
 #M = [32, 64, 128, 256]
 #K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
@@ -25,8 +25,8 @@ for m in M:
         print("M:   ", m)
         print("K:   ", k)
 
-        rec = cosamp("../lena.png", dct(256), m, k)
-        cv2.imwrite(f"lena_cosamp_M{m}_K{k}.png", rec.get_Image())
+        rec = sp("../lena.png", dct(256), m, k)
+        cv2.imwrite(f"lena_sp_M{m}_K{k}.png", rec.get_Image())
         print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
 
         mm.append(m)
