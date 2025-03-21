@@ -3,7 +3,8 @@ from framework import ImageCS, dct, brgp, omp, sp, cosamp
 import os
 import subprocess
 import cv2
-
+import threading
+from time import time
 try:
     db.create_table()
     db.delete_all()
@@ -15,18 +16,16 @@ except:
 
 algorithms = [brgp, omp, sp, cosamp]
 images = [f for f in os.listdir("../misc/") if os.path.isfile(os.path.join("../misc/", f))]
-M = [256]
-K = [i for i in range(10, 11)]
+M = [128, 256, 512]
+K = [i for i in range(10, 100)]
 
 os.system("rm -rf images")
 os.mkdir("images")
 
-for alg in algorithms:
-    print(f"---------- ALGORITHM {alg.__name__} ----------")
-    os.mkdir(f"images/{alg.__name__}")
-
+def processing_images(alg):
+    global images, M, K
+    t1 = time()
     for image in images:
-        print(f"---------- IMAGE {image} ----------")
         os.mkdir(f"images/{alg.__name__}/{image[:image.find(".png")]}")
 
         for m in M:
@@ -48,3 +47,10 @@ for alg in algorithms:
                         except:
                             print(f"image {image} is not processed in algorithm {alg.__name__}")
                             break
+    t2 = time()
+    print(f"algorithm {alg.__name__} take {round((t2-t1) / 60), 2}min")
+
+for alg in algorithms:
+    os.mkdir(f"images/{alg.__name__}")
+    x = threading.Thread(target=processing_images, args=(alg, ))
+    x.start()
