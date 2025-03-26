@@ -17,7 +17,7 @@ except:
 algorithms = [brgp, omp, sp, cosamp]
 images = [f for f in os.listdir("../misc/") if os.path.isfile(os.path.join("../misc/", f))]
 M = [128, 256, 512]
-K = [i for i in range(10, 100)]
+K = [i for i in range(100, 150)]
 
 os.system("rm -rf images")
 os.mkdir("images")
