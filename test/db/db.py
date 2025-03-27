@@ -9,9 +9,11 @@ def create_table():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_image Text NOT NULL,
             pwd TEXT NOT NULL,
             algorithm TEXT NOT NULL,
             PSNR FLOAT,
+            SSIM FLOAT,
             CR FLOAT,
             K INTEGER NOT NULL,
             M INTEGER NOT NULL,
@@ -22,13 +24,13 @@ def create_table():
     conn.commit()
     conn.close()
 
-def add_result(pwd, algorithm, psnr, cr, k, m, height, width):
+def add_result(pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO results (pwd, algorithm, PSNR, CR, K, M, height, width)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (pwd, algorithm, psnr, cr, k, m, height, width))
+        INSERT INTO results (pwd, original_image, algorithm, PSNR, SSIM, CR, K, M, height, width)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width))
     conn.commit()
     conn.close()
 
@@ -45,6 +47,14 @@ def get_result_by_id(result_id):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results WHERE id = ?', (result_id,))
     result = cursor.fetchone()
+    conn.close()
+    return result
+
+def get_result_by_alg(alg):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM results WHERE algorithm = ?', (alg,))
+    result = cursor.fetchall()
     conn.close()
     return result
 
