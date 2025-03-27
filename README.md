@@ -9,7 +9,7 @@
 
 # Пример запуска тестирования
 
-## Win/Linux
+### Win/Linux
 
 Код выполнять внутри директоии `test/`.
 
@@ -20,14 +20,14 @@ $ python algorithm.py
 
 # Build
 
-## Windows
+### Windows
 
 ```
 > python -m venv venv
 > source venv/bin/activate
 > pip install -r requirements.txt
 ```
-## Linux
+### Linux
 
 ```
 $ ./setup.sh
