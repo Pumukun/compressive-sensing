@@ -4,24 +4,29 @@ import cv2
 import os
 from os import listdir
 from os.path import isfile, join
-
-from framework import ImageCS, lamp, dct
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from framework import ImageCS, lamp
 import db
-import unittest
 
-M = [256]
-K = [20, 30]
 
-onlyfiles = [f for f in listdir("../ims/") if isfile(join("../ims/", f))]
+def main():
+    # Список изображений для обработки
+    image_list = ["../misc/lena_64.png"]
+    output_folder = "../images/lamp"
 
-im_cnt = 0
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
-for image in onlyfiles:
-    for m in M:
-        for k in K:
-            try:
+    for image_path in image_list:
+        basename = os.path.splitext(os.path.basename(image_path))[0]
+        print(f"=======================RECONSTUCTING IMAGE {basename}.png=======================")
+        rec = lamp(image_path)
+        rec_path = os.path.join(output_folder, f"{basename}_reconstructed.png")
+        cv2.imwrite(rec_path, rec.get_Image())
+        print(f"METRICS: cr={rec.get_CR()}, psnr={rec.get_PSNR()}")
+        print(f"Recover saved as: {rec_path}")
+        print(f"============================END FOR {basename}.png==============================")
 
-                rec = lamp(f"../ims/{image}", dct(256), m, k)
-                cv2.imwrite(f"./M{m}_K{k}.png", rec.get_Image())
-            except:
-                print(f"Error processing image {image} with M={m} and K={k}")
+
+if __name__ == "__main__":
+    main()
