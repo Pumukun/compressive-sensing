@@ -4,14 +4,13 @@ import cv2
 import os
 from os import listdir
 from os.path import isfile, join
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from framework import ImageCS, lamp
 import db
 
 
 def main():
     # Список изображений для обработки
-    image_list = ["../misc/lena_64.png"]
+    image_list = ["../misc/lena.png"]
     output_folder = "../images/lamp"
 
     if not os.path.exists(output_folder):
