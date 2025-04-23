@@ -6,6 +6,44 @@ from framework.utils import ImageCS
 from typing import Tuple
 
 
+def cs_iht(y: np.ndarray, Phi: np.ndarray, K: int, max_iter: int = 50, tol: float = 1e-6) -> Tuple[
+    np.ndarray, Tuple[np.ndarray, ...]]:
+    """
+    Iterative Hard Thresholding (IHT) algorithm.
+
+    Args:
+        y: измеренный сигнал (M x 1)
+        Phi: матрица измерений (M x N)
+        K: максимальное количество ненулевых коэффициентов
+        max_iter: максимальное число итераций
+        tol: порог сходимости по ошибке
+
+    Returns:
+        Восстановленный вектор (N x 1), индексы ненулевых элементов
+    """
+    M, N = Phi.shape
+    x = np.zeros((N, 1))  # начальное приближение
+    step_size = 1.0 / np.linalg.norm(Phi, ord=2) ** 2  # безопасный шаг градиента
+
+    for i in range(max_iter):
+        residual = y - Phi @ x
+        gradient = Phi.T @ residual
+        x_new = x + step_size * gradient
+
+        # Жесткий порог: оставим только K наибольших по модулю элементов
+        abs_x = np.abs(x_new)
+        threshold = np.partition(abs_x.ravel(), -K)[-K]
+        mask = abs_x >= threshold
+        x_new[~mask] = 0
+
+        # Проверка сходимости
+        if np.linalg.norm(x_new - x) < tol:
+            break
+        x = x_new
+
+    Candidate = np.where(x.ravel() != 0)
+    return x, Candidate
+
 def iht(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     # Загружаем изображение в градациях серого
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -63,3 +101,5 @@ def dct(N: int) -> np.ndarray:
         mat_dct_1d[:, k] = dct_1d / np.linalg.norm(dct_1d)
 
     return mat_dct_1d
+
+
