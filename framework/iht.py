@@ -102,4 +102,23 @@ def dct(N: int) -> np.ndarray:
 
     return mat_dct_1d
 
+image_path = "grayscale.jpg"  # Убедись, что изображение есть в этой папке
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+H, W = image.shape()
 
+N = H        # Размерность DCT-базиса (по высоте)
+M = int(N * 0.5)  # Количество измерений (например, 50% от исходного)
+K = 40       # Уровень разреженности
+
+# Создание базисной матрицы (например, DCT)
+matrix = dct(N)
+
+# Вызов IHT-функции
+result = iht(image_path, matrix, M, K)
+
+# Проверка результатов
+print(f"PSNR: {result.psnr:.2f} dB")
+print(f"CR: {result.cr:.2f}")
+
+# Сохраняем восстановленное изображение
+cv2.imwrite("reconstructed_iht.png", np.clip(result.data, 0, 255).astype(np.uint8))
