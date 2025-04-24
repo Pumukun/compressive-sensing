@@ -47,7 +47,7 @@ def cs_iht(y: np.ndarray, Phi: np.ndarray, K: int, max_iter: int = 50, tol: floa
 def iht(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     # Загружаем изображение в градациях серого
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    H, W = image.shape()          # Высота и ширина изображения
+    H, W = image.shape         # Высота и ширина изображения
     N = H                       # Размерность сигнала (предполагаем, что базис имеет размер H)
 
     im = np.array(image)       # Преобразуем изображение в массив NumPy
@@ -104,7 +104,7 @@ def dct(N: int) -> np.ndarray:
 
 image_path = "grayscale.jpg"  # Убедись, что изображение есть в этой папке
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-H, W = image.shape()
+H, W = image.shape
 
 N = H        # Размерность DCT-базиса (по высоте)
 M = int(N * 0.5)  # Количество измерений (например, 50% от исходного)
