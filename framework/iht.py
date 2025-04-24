@@ -5,25 +5,29 @@ import framework.metrics as metrics
 from framework.utils import ImageCS
 from typing import Tuple
 from framework.utils import ImageCS
+from omp import dct
 
+# Оператор жёсткого порога
+def thresholdOperator(K:int, x:np.ndarray):
+    abs_x = np.abs(x)
+    threshold = np.partition(abs_x.ravel(), -K)[-K]
+    mask = abs_x >= threshold
+    x[~mask] = 0
+    return x
 
-def cs_iht(y: np.ndarray, Phi: np.ndarray, K: int, max_iter: int = 50, tol: float = 1e-6) -> Tuple[
+#восстонавление по столбцам
+def cs_iht(y: np.ndarray, Phi: np.ndarray, K: int, step_size:float, max_iter: int = 60, tol: float = 1e-6) -> Tuple[
     np.ndarray, Tuple[np.ndarray, ...]]:
 
     M, N = Phi.shape
-    x = np.zeros((N, 1))  # начальное приближение
-    step_size = 1.0 / np.linalg.norm(Phi, ord=2) ** 2  # безопасный шаг градиента
+    x = np.zeros((N, 1))
 
     for i in range(max_iter):
-        residual = y - Phi @ x
-        gradient = Phi.T @ residual
-        x_new = x + step_size * gradient
+        residual = y - np.dot(Phi,x)
+        gradient = np.dot(Phi.T,residual)
 
-        # Жесткий порог: оставим только K наибольших по модулю элементов
-        abs_x = np.abs(x_new)
-        threshold = np.partition(abs_x.ravel(), -K)[-K]
-        mask = abs_x >= threshold
-        x_new[~mask] = 0
+        x_new = x + (step_size * gradient)
+        x_new = thresholdOperator(K, x_new)
 
         # Проверка сходимости
         if np.linalg.norm(x_new - x) < tol:
@@ -33,79 +37,39 @@ def cs_iht(y: np.ndarray, Phi: np.ndarray, K: int, max_iter: int = 50, tol: floa
     Candidate = np.where(x.ravel() != 0)
     return x, Candidate
 
+#основная функция(сжатие\разжатие изображения)
 def iht(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
-    # Загружаем изображение в градациях серого
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    H, W = image.shape         # Высота и ширина изображения
-    N = H                       # Размерность сигнала (предполагаем, что базис имеет размер H)
 
-    im = np.array(image)       # Преобразуем изображение в массив NumPy
-    # Генерация случайной измерительной матрицы Phi размером M x N
-    Phi = np.random.randn(M, N) / np.sqrt(M)
-    # Сжатие изображения: применяем Phi к каждой колонке
-    img_cs_1d = np.dot(Phi, im)  # Результат: сжатые измерения размером M x W
-    # Матрица для хранения разреженного представления (после восстановления)
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    H, W = image.shape
+    N = H
+
+    im = np.array(image)
+
+    # Генерация случайной матрицы Phi размером M x N, удовлетворяющей RIP для sigma_3s
+    # Здесь конкретно Бернуллиевская матрица
+    Phi = np.random.choice([-1, 1], size=(M, N)) / np.sqrt(M)
+    img_cs_1d = np.dot(Phi, im)
     sparse_rec_1d = np.zeros((N, W))
-    # Предварительное вычисление Theta = Phi * Ψ (где Ψ — матрица преобразования, например DCT)
     Theta_1d = np.dot(Phi, matrix)
-    print("point_1")
+
+    # безопасный шаг градиента
+    step_size = 1.0 / np.linalg.norm(Phi, ord=2) ** 2
 
     # Обработка каждой колонки изображения по отдельности
     for i in range(W):
         print(i)
-        # Извлекаем колонку сжатого сигнала y размером M x 1
         y = np.reshape(img_cs_1d[:, i], (M, 1))
-        # Восстанавливаем разреженное представление x при помощи IHT
-        column_rec, Candidate = cs_iht(y, Theta_1d, K)
+        column_rec, Candidate = cs_iht(y, Theta_1d, K, step_size)
 
         # Преобразуем в вектор и сохраняем в результирующую матрицу
         x_pre = np.reshape(column_rec, (N))
         sparse_rec_1d[:, i] = x_pre
-    # Восстанавливаем изображение: применяем Ψ к разреженному представлению
+
     img_rec = np.dot(matrix, sparse_rec_1d)
 
-    # Вычисляем метрики сжатия и качества
-    CR: float = metrics.CR(image, sparse_rec_1d)      # Compression Ratio
-    PSNR: float = metrics.PSNR(image, img_rec)        # Peak Signal-to-Noise Ratio
-
-    # Упаковываем результат в объект ImageCS
+    CR: float = metrics.CR(image, sparse_rec_1d)
+    PSNR: float = metrics.PSNR(image, img_rec)
     img_res = ImageCS(img_rec, cr=CR, psnr=PSNR)
 
     return img_res
-
-def dct(N: int) -> np.ndarray:
-    mat_dct_1d: np.ndarray = np.zeros((N, N))
-    v = range(N)
-
-    for k in range(0, N):
-        dct_1d = np.cos(np.dot(v, k * math.pi / N))
-
-        if k > 0:
-            dct_1d = dct_1d - np.mean(dct_1d)
-
-        mat_dct_1d[:, k] = dct_1d / np.linalg.norm(dct_1d)
-
-    return mat_dct_1d
-
-image_path = "Grayscale.jpg"
-image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-H, W = image.shape
-
-N = H        # Размерность DCT-базиса (по высоте)
-M = int(N * 0.5)  # Количество измерений (например, 50% от исходного)
-K = 40       # Уровень разреженности
-
-# Создание базисной матрицы (например, DCT)
-matrix = dct(N)
-print("101")
-# Вызов IHT-функции
-result = iht(image_path, matrix, M, K)
-print("100")
-
-
-# Проверка результатов
-print(f"PSNR: {result.get_PSNR():.2f} dB")
-print(f"CR: {result.get_CR():.2f}")
-
-# Сохраняем восстановленное изображение
-cv2.imwrite("reconstructed_iht.png", np.clip((result.get_Image()).data, 0, 255).astype(np.uint8))
