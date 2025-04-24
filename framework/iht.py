@@ -87,7 +87,7 @@ def dct(N: int) -> np.ndarray:
 
     return mat_dct_1d
 
-image_path = "Grayscale.jpg"  # Убедись, что изображение есть в этой папке
+image_path = "Grayscale.jpg"
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 H, W = image.shape
 
