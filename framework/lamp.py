@@ -6,98 +6,8 @@ import framework.metrics as metrics
 from framework.utils import ImageCS
 
 
-
-def compute_tau(x_temp: np.ndarray, K_tilde: int) -> float:
-    N = x_temp.size
-    num = min(5 * K_tilde, N)
-    absx = np.abs(x_temp)
-    return float(np.partition(absx, -num)[-num])
-
-
-def solve_graph_cut(x_temp: np.ndarray,
-                    H: int,
-                    W_block: int,
-                    tau: float,
-                    sigma0: float,
-                    pairwise_weight: float) -> np.ndarray:
-    N_block = H * W_block
-    g = maxflow.Graph[float](N_block, N_block * 8)
-    g.add_nodes(N_block)
-
-    # unary potentials
-    U0 = (x_temp**2) / (2 * sigma0**2)    # s=-1
-    U1 = - (np.abs(x_temp) - tau) / tau   # s=+1
-    U0 -= U0.min()
-    U1 -= U1.min()
-
-    for i in range(N_block):
-        g.add_tedge(i, U1[i], U0[i])
-
-    # pairwise edges with 8‑connectivity
-    for i in range(H):
-        for j in range(W_block):
-            u = i * W_block + j
-            # horizontal
-            if j + 1 < W_block:
-                g.add_edge(u, u + 1, pairwise_weight, pairwise_weight)
-            # vertical
-            if i + 1 < H:
-                g.add_edge(u, u + W_block, pairwise_weight+1, pairwise_weight+1)
-            # diagonal down-right
-            if i + 1 < H and j + 1 < W_block:
-                g.add_edge(u, u + W_block + 1, pairwise_weight-0.5, pairwise_weight-0.5)
-            # diagonal down-left
-            if i + 1 < H and j - 1 >= 0:
-                g.add_edge(u, u + W_block - 1, pairwise_weight-0.5, pairwise_weight-0.5)
-
-    g.maxflow()
-    labels = np.array([g.get_segment(i) for i in range(N_block)], dtype=int)
-    return 2 * labels - 1
-
-def prune_signal(x: np.ndarray, K_tilde: int) -> np.ndarray:
-    x_pruned = np.zeros_like(x)
-    if K_tilde <= 0:
-        return x_pruned
-    idx = np.argpartition(-np.abs(x), K_tilde - 1)[:K_tilde]
-    x_pruned[idx] = x[idx]
-    return x_pruned
-
-
-def lamp_reconstruction_block(y: np.ndarray,
-                              Phi: np.ndarray,
-                              K_tilde: int,
-                              H: int,
-                              W_block: int,
-                              max_iter: int = 15,
-                              tol: float = 1e-3,
-                              sigma0: float = 0.08,
-                              pairwise_weight: float = 0.8) -> np.ndarray:
-    N_block = H * W_block
-    x = np.zeros(N_block, dtype=float)
-
-    for k in range(max_iter):
-        r = y - Phi.dot(x)
-        x_temp = x + Phi.T.dot(r)
-        tau = compute_tau(x_temp, K_tilde)
-        s_opt = solve_graph_cut(x_temp, H, W_block, tau, sigma0, pairwise_weight)
-        S = (s_opt == 1)
-
-        x_new = np.zeros_like(x)
-        if S.any():
-            Phi_S = Phi[:, S]
-            t, *_ = lstsq(Phi_S, y, rcond=None)
-            x_new[S] = t
-        x_new = prune_signal(x_new, K_tilde)
-
-        if np.linalg.norm(y - Phi.dot(x_new)) < tol:
-            x = x_new
-            break
-        x = x_new
-    return x
-
-
 def lamp(image_path: str,
-         K_ratio: float = 0.18,
+         K_ratio: float = 0.2,
          M_ratio: float = 0.35,
          block_width: int = 2) -> ImageCS:
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -151,3 +61,91 @@ def lamp(image_path: str,
     CR = metrics.CR(img, dct_rec)
     PSNR = metrics.PSNR(img, img_out)
     return ImageCS(img_out, cr=CR, psnr=PSNR)
+
+
+def lamp_reconstruction_block(y: np.ndarray,
+                              Phi: np.ndarray,
+                              K_tilde: int,
+                              H: int,
+                              W_block: int,
+                              max_iter: int = 15,
+                              tol: float = 1e-3,
+                              sigma0: float = 0.02,
+                              pairwise_weight: float = 1) -> np.ndarray:
+    N_block = H * W_block
+    x = np.zeros(N_block, dtype=float)
+
+    for k in range(max_iter):
+        r = y - Phi.dot(x)
+        x_temp = x + Phi.T.dot(r)
+        tau = compute_tau(x_temp, K_tilde)
+        s_opt = solve_graph_cut(x_temp, H, W_block, tau, sigma0, pairwise_weight)
+        S = (s_opt == 1)
+
+        x_new = np.zeros_like(x)
+        if S.any():
+            Phi_S = Phi[:, S]
+            t, *_ = lstsq(Phi_S, y, rcond=None)
+            x_new[S] = t
+        x_new = prune_signal(x_new, K_tilde)
+
+        if np.linalg.norm(y - Phi.dot(x_new)) < tol:
+            x = x_new
+            break
+        x = x_new
+    return x
+
+
+def compute_tau(x_temp: np.ndarray, K_tilde: int) -> float:
+    N = x_temp.size
+    num = min(5 * K_tilde, N)
+    absx = np.abs(x_temp)
+    return float(np.partition(absx, -num)[-num])
+
+def prune_signal(x: np.ndarray, K_tilde: int) -> np.ndarray:
+    x_pruned = np.zeros_like(x)
+    if K_tilde <= 0:
+        return x_pruned
+    idx = np.argpartition(-np.abs(x), K_tilde - 1)[:K_tilde]
+    x_pruned[idx] = x[idx]
+    return x_pruned
+
+def solve_graph_cut(x_temp: np.ndarray,
+                    H: int,
+                    W_block: int,
+                    tau: float,
+                    sigma0: float,
+                    pairwise_weight: float) -> np.ndarray:
+    N_block = H * W_block
+    g = maxflow.Graph[float](N_block, N_block * 8)
+    g.add_nodes(N_block)
+
+    # unary potentials
+    U0 = (x_temp**2) / (2 * sigma0**2)    # s=-1
+    U1 = - (np.abs(x_temp) - tau) / tau   # s=+1
+    U0 -= U0.min()
+    U1 -= U1.min()
+
+    for i in range(N_block):
+        g.add_tedge(i, U1[i], U0[i])
+
+    # pairwise edges with 8‑connectivity
+    for i in range(H):
+        for j in range(W_block):
+            u = i * W_block + j
+            # horizontal
+            if j + 1 < W_block:
+                g.add_edge(u, u + 1, pairwise_weight, pairwise_weight)
+            # vertical
+            if i + 1 < H:
+                g.add_edge(u, u + W_block, pairwise_weight+1, pairwise_weight+1)
+            # diagonal down-right
+            if i + 1 < H and j + 1 < W_block:
+                g.add_edge(u, u + W_block + 1, pairwise_weight-0.5, pairwise_weight-0.5)
+            # diagonal down-left
+            if i + 1 < H and j - 1 >= 0:
+                g.add_edge(u, u + W_block - 1, pairwise_weight-0.5, pairwise_weight-0.5)
+
+    g.maxflow()
+    labels = np.array([g.get_segment(i) for i in range(N_block)], dtype=int)
+    return 2 * labels - 1

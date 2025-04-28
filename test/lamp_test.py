@@ -18,13 +18,13 @@ def main():
 
     for image_path in image_list:
         basename = os.path.splitext(os.path.basename(image_path))[0]
-        print(f"=======================RECONSTUCTING IMAGE {basename}.png=======================")
+        print(f"======================= RECONSTUCTING IMAGE {basename}.png =======================")
         rec = lamp(image_path)
         rec_path = os.path.join(output_folder, f"{basename}_reconstructed.png")
         cv2.imwrite(rec_path, rec.get_Image())
         print(f"METRICS: cr={rec.get_CR()}, psnr={rec.get_PSNR()}")
         print(f"Recover saved as: {rec_path}")
-        print(f"============================END FOR {basename}.png==============================")
+        print(f"============================ END FOR {basename}.png ==============================")
 
 
 if __name__ == "__main__":
