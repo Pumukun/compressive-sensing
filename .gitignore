@@ -166,3 +166,5 @@ cython_debug/
 
 images/
 plots/
+
+.DS_Store
