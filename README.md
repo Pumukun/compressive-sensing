@@ -33,7 +33,17 @@ $ python algorithm.py
 $ ./setup.sh
 ```
 
-# Контакты
+# Авторы
 
-*Telegram:* @hitfot
-*Mail:* hitfot@mail.ru 
+[Герда Владислав](https://github.com/hitfot)
+> hitfot@mail.ru
+>
+> Telegram: @hitfot
+
+[Демченко Григорий](https://github.com/Pumukun)
+
+[Кочерыгина Анастасия](https://github.com/somniiium)
+
+[Сабитова Алина](https://github.com/AlinaSAB)
+
+[Шибанов Михаил](https://github.com/Kar1ch)
