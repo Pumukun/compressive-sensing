@@ -7,6 +7,14 @@ from framework.utils import ImageCS
 from typing import Tuple
 
 def sp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
+    '''
+    SP 2d функция. 
+        image_path - путь к сжимаемому изображению (изображение квадратное, цветное/ЧБ). 
+        matrix - базисная матрица размера NxN. 
+        K - количество итераций алгоритма. 
+        M - размер вспомогательной матрицы.
+    by Grigory Demchenko
+    '''
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     H, W = image.shape
     N = H
@@ -19,9 +27,6 @@ def sp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     Theta_1d = np.dot(Phi, matrix)
 
     for i in range(N):
-        #if i % 50 == 0:
-        #    print('iteration: ', i)
-
         y = np.reshape(img_cs_1d[:, i],(M, 1))
         column_rec, Candidate = cs_sp(y, Theta_1d, K)
         x_pre = np.reshape(column_rec, (N))
@@ -36,7 +41,14 @@ def sp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
 
     return img_res
 
-def cs_sp(y: np.ndarray, Phi: np.ndarray, K: int) -> Tuple[np.ndarray, np.ndarray]:    
+def cs_sp(y: np.ndarray, Phi: np.ndarray, K: int) -> Tuple[np.ndarray, np.ndarray]:
+    '''
+    Вспомогательная функция сжатия векторов. 
+        y - сжимаемый вектор. 
+        Phi - матрица MxN, являющаяся произведением базисной матрицы и матрицы измерений. 
+        K - Количество итераций алгоритма.
+    by Grigory Demchenko
+    ''' 
     residual: np.ndarray = y
     (M, N) = Phi.shape
     index: np.ndarray = np.array([])

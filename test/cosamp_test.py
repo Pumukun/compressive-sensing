@@ -1,55 +1,64 @@
-import numpy as np
-from matplotlib import pyplot as plt
+import db
+from framework import dct, brgp, omp, sp, cosamp
+import os
 import cv2
+import threading
+from time import time
+import numpy as np
 
-from framework import ImageCS, cosamp, dct
+try:
+    db.create_table()
+    db.delete_all()
+    print("----------------")
+    print("database created")
+    print("----------------")
+except:
+    print("DB troubles")
 
-#M = [32, 64, 128, 256]
-#K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
+algorithms = [cosamp]
+images = [f for f in os.listdir("../misc/") if os.path.isfile(os.path.join("../misc/", f))]
+M = [512, 1024]
+K = [i for i in range(1, 1000, 50)]
 
-#M = [128]
-#K = [20]
+os.system("rm -rf images")
+os.mkdir("images")
 
-M = [128]
-K = range(10, 50, 2)
+def processing_images(alg):
+    global images, M, K
+    t1 = time()
+    for image in images:
+        os.mkdir(f"images/{alg.__name__}/{image[:image.find(".png")]}")
 
-mm = []
-kk = []
-psnr = []
-cr = []
+        for m in M:
+            for k in K:
+                try:
+                    rec = alg(f"../misc/{image}", dct(256), k, m)
+                    cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                    print(rec.get_Image())
+                    print(np.argmax(rec.get_Image()))
+                    db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 256, 256)
+                except:
+                    try:
+                        rec = alg(f"../misc/{image}", dct(512), k, m)
+                        cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                        print(rec.get_Image())
+                        print(np.max(rec.get_Image()))
+                        db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 512, 512)
+                    except:
+                        try:
+                            rec = alg(f"../misc/{image}", dct(1024), k, m)
+                            cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                            print(rec.get_Image())
+                            print(np.argmax(rec.get_Image()))
+                            db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 1024, 1024)
+                        except:
+                            print(f"image {image} is not processed in algorithm {alg.__name__}")
+                            break
 
-im_cnt = 0
-for m in M:
-    for k in K:
-        print(f"---------- IMAGE {im_cnt} ----------")
-        print("M:   ", m)
-        print("K:   ", k)
+    t2 = time()
+    print(f"algorithm {alg.__name__} take {round((t2-t1) / 60), 2}min")
 
-        rec = cosamp("../lena.png", dct(256), m, k)
-        cv2.imwrite(f"lena_cosamp_M{m}_K{k}.png", rec.get_Image())
-        print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
-
-        mm.append(m)
-        kk.append(k)
-        psnr.append(rec.get_PSNR())
-        cr.append(rec.get_CR())
-
-        im_cnt += 1
-
-print("mm = ", mm)
-print("kk = ", kk)
-print("psnr = ", psnr)
-print("cr = ", cr)
-
-
-# for i in range(0, len(M)):
-#     plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
-
-plt.plot(cr, psnr, marker="o")
-
-plt.xlabel("CR")
-plt.ylabel("PSNR")
-plt.grid()
-plt.legend()
-plt.show()
-
+for alg in algorithms:
+    os.mkdir(f"images/{alg.__name__}")
+    x = threading.Thread(target=processing_images, args=(alg, ))
+    x.start()

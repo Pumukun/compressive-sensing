@@ -1,15 +1,20 @@
 import sqlite3
+from typing import List, Tuple, Optional, Union
 
-def connect_db():
+'''by Mikhail Shibanov'''
+
+def connect_db() -> sqlite3.Connection:
+    '''Подключение к базе данных SQLite results.db'''
     return sqlite3.connect('results.db')
 
-def create_table():
+def create_table() -> None:
+    '''Создание таблицы results, если она не существует'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            original_image Text NOT NULL,
+            original_image TEXT NOT NULL,
             pwd TEXT NOT NULL,
             algorithm TEXT NOT NULL,
             PSNR FLOAT,
@@ -24,7 +29,19 @@ def create_table():
     conn.commit()
     conn.close()
 
-def add_result(pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width):
+def add_result(
+    pwd: str,
+    original_image: str,
+    algorithm: str,
+    psnr: Optional[float],
+    ssim: Optional[float],
+    cr: Optional[float],
+    k: int,
+    m: int,
+    height: int,
+    width: int
+) -> None:
+    '''Добавление новой записи в таблицу results'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -34,7 +51,8 @@ def add_result(pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, wid
     conn.commit()
     conn.close()
 
-def get_all_results():
+def get_all_results() -> List[Tuple]:
+    '''Получение всех записей из таблицы results'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results')
@@ -42,7 +60,8 @@ def get_all_results():
     conn.close()
     return results
 
-def get_result_by_id(result_id):
+def get_result_by_id(result_id: int) -> Optional[Tuple]:
+    '''Получение записи по ID'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results WHERE id = ?', (result_id,))
@@ -50,7 +69,8 @@ def get_result_by_id(result_id):
     conn.close()
     return result
 
-def get_result_by_alg(alg):
+def get_result_by_alg(alg: str) -> List[Tuple]:
+    '''Получение всех записей для указанного алгоритма'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results WHERE algorithm = ?', (alg,))
@@ -58,7 +78,18 @@ def get_result_by_alg(alg):
     conn.close()
     return result
 
-def update_result(result_id, pwd, algorithm, psnr, cr, k, m, height, width):
+def update_result(
+    result_id: int,
+    pwd: str,
+    algorithm: str,
+    psnr: Optional[float],
+    cr: Optional[float],
+    k: int,
+    m: int,
+    height: int,
+    width: int
+) -> None:
+    '''Обновление записи по её ID'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -69,17 +100,18 @@ def update_result(result_id, pwd, algorithm, psnr, cr, k, m, height, width):
     conn.commit()
     conn.close()
 
-def delete_result(result_alg):
+def delete_result(result_alg: str) -> None:
+    '''Удаление всех записей для указанного алгоритма'''
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM results WHERE algorithm	 = ?', (result_alg,))
+    cursor.execute('DELETE FROM results WHERE algorithm = ?', (result_alg,))
     conn.commit()
     conn.close()
 
-def delete_all():
+def delete_all() -> None:
+    '''Удаление всех записей из таблицы results'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM results')
     conn.commit()
     conn.close()
-
