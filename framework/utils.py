@@ -3,6 +3,17 @@ import numpy as np
 import cv2
 
 class ImageCS():
+    '''
+    Класс для представления изображения с метриками сжатия
+
+    Атрибуты:
+        __matrix (np.ndarray): Данные изображения в формате numpy.ndarray
+        __cr (float): Коэффициент сжатия изображения. По умолчанию 0.0
+        __psnr (float): Пиковое отношение сигнал/шум. По умолчанию 0.0
+        __ssim (float): Индекс структурного сходства. По умолчанию 0.0
+
+    by Grigory Demchenko
+    '''
     def __init__(self, matrix=np.ndarray((0,0)), cr: float=0.0, psnr: float=0.0, ssim: float=0.0):
         self.__matrix = matrix
         self.__cr: float = cr
