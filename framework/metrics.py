@@ -15,11 +15,18 @@ def PSNR(original, compressed):
     return _psnr
 
 def SSIM(original, compressed):
+    '''
+    Функция вычисления метрики SSIM. original, compressed - оригинальное и сжатое изображение соответственно
+    by Vladislav Gerda
+    '''
     metric = ssim(original, compressed)
     return metric
 
 def CR(image_source: np.ndarray, image_compressed: np.ndarray) -> float:
-    
+    '''
+    Функция вычисления степени сжатия изображения. image_source, image_compressed - оригинальное и сжатое изображение соответственно
+    by Vladislav Gerda
+    '''
     nonzero_source: Tuple[np.ndarray, ...] = image_source.nonzero()
     nonzero_compressed: Tuple[np.ndarray, ...] = image_compressed.nonzero()
 

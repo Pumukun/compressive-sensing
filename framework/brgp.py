@@ -58,7 +58,9 @@ def cs_brgp(y: np.ndarray, Phi: np.ndarray, K: int, Candidate: np.ndarray, u: fl
         y - сжимаемый вектор. 
         Phi - матрица MxN, являющаяся произведением базисной матрицы и матрицы измерений. 
         K - Количество итераций алгоритма.
-    by Vladislav Gerda
+        Candidate - initial candidate support set
+        u - коэффициент, допустимое значение от 0 до 1
+    by Grigory Demchenko
     '''  
     (M, N) = Phi.shape
 
