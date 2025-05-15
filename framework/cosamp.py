@@ -7,7 +7,11 @@ from typing import Tuple
 
 def cosamp(image_path: str, matrix: np.ndarray, s: int, M: int) -> ImageCS:
     '''
-    CoSaMP 2d function. image_path - путь к сжимаемому изображению (изображение квадратное, цветное/ЧБ). matrix - базисная матрица размера NxN. s - sparsity. M - размер вспомогательной матрицы
+    CoSaMP 2d function. 
+        image_path - путь к сжимаемому изображению (изображение квадратное, цветное/ЧБ). 
+        matrix - базисная матрица размера NxN. 
+        s - sparsity. 
+        M - размер вспомогательной матрицы
     by Vladislav Gerda
     '''
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -38,7 +42,12 @@ def cosamp(image_path: str, matrix: np.ndarray, s: int, M: int) -> ImageCS:
 
 def cs_cosamp(y: np.ndarray, s: int, Phi: np.ndarray, epsilon: float = 1e-10, K: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
     '''
-    Вспомогательная функция сжатия векторов. y - сжимаемый вектор. s - sparsity. Phi - матрица MxN, являющаяся произведением базисной матрицы и матрицы измерений. epsilon - допустимая погрешность. K - максимальное количество итераций алгоритма.
+    Вспомогательная функция сжатия векторов. 
+        y - сжимаемый вектор. 
+        s - sparsity. 
+        Phi - матрица MxN, являющаяся произведением базисной матрицы и матрицы измерений. 
+        epsilon - допустимая погрешность. 
+        K - максимальное количество итераций алгоритма.
     by Vladislav Gerda
     ''' 
     residual: np.ndarray = y 

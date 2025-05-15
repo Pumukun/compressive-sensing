@@ -10,6 +10,14 @@ from framework.omp import cs_omp
 from framework.sp import cs_sp
 
 def brgp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
+    '''
+    BRGP 2d функция. 
+        image_path - путь к сжимаемому изображению (изображение квадратное, цветное/ЧБ). 
+        matrix - базисная матрица размера NxN. 
+        K - количество итераций алгоритма. 
+        M - размер вспомогательной матрицы.
+    by Grigory Demchenko
+    '''
     # image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     image = PIL.Image.open(image_path)
     image = image.convert("L")
@@ -18,7 +26,7 @@ def brgp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
 
     im = np.array(image)
 
-    Phi = np.random.randn(M,N) / np.sqrt(M)
+    Phi = np.random.randn(M,N) / np.sqrt(M) # Формирование матрицы измерений
     img_cs_1d = np.dot(Phi, im)
 
     sparse_rec_1d = np.zeros((N, W))
@@ -44,8 +52,14 @@ def brgp(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
 
     return img_res
 
-def cs_brgp(y: np.ndarray, Phi: np.ndarray, K: int, Candidate: np.ndarray) -> np.ndarray: 
-    u: float = 0.8
+def cs_brgp(y: np.ndarray, Phi: np.ndarray, K: int, Candidate: np.ndarray, u: float = 0.8) -> np.ndarray:
+    '''
+    Вспомогательная функция сжатия векторов. 
+        y - сжимаемый вектор. 
+        Phi - матрица MxN, являющаяся произведением базисной матрицы и матрицы измерений. 
+        K - Количество итераций алгоритма.
+    by Vladislav Gerda
+    '''  
     (M, N) = Phi.shape
 
     x = np.zeros((N, 1))                            
@@ -113,7 +127,7 @@ def cs_brgp(y: np.ndarray, Phi: np.ndarray, K: int, Candidate: np.ndarray) -> np
         x[Candidate] = x_temp
         r = y - np.dot(Phi, x)
 
-        T = T * 0.8
+        T = T * u
         T = np.floor(T).astype(int)
 
     return x
