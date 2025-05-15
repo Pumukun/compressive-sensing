@@ -7,17 +7,18 @@ from skimage.metrics import structural_similarity as ssim
 
 
 def PSNR(original, compressed):
-    normilized_original = original / 255
-    normilized_compressed = compressed / 255
-    _psnr = psnr(normilized_original, normilized_compressed)
-    # _psnr = psnr(original, compressed)
+    '''
+    Функция вычисления метрики PSNR. original, compressed - оригинальное и сжатое изображение соответственно
+    by Vladislav Gerda
+    '''
+    _psnr = psnr(original, compressed)
     return _psnr
 
+def SSIM(original, compressed):
+    metric = ssim(original, compressed)
+    return metric
 
-def CR(image_source: np.ndarray, image_compressed: np.ndarray, print_image_array = False) -> float:
-    if print_image_array:
-        print("source:\n", image_source)
-        print("comressed:\n", image_compressed)
+def CR(image_source: np.ndarray, image_compressed: np.ndarray) -> float:
     
     nonzero_source: Tuple[np.ndarray, ...] = image_source.nonzero()
     nonzero_compressed: Tuple[np.ndarray, ...] = image_compressed.nonzero()
@@ -32,8 +33,3 @@ def CR(image_source: np.ndarray, image_compressed: np.ndarray, print_image_array
         compressed_count += i.size
 
     return source_count / compressed_count
-
-
-def SSIM(original, compressed):
-    metric = ssim(original, compressed)
-    return metric
