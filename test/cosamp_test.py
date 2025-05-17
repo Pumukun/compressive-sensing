@@ -17,8 +17,9 @@ except:
 
 algorithms = [cosamp]
 images = [f for f in os.listdir("../misc/") if os.path.isfile(os.path.join("../misc/", f))]
+images = ['lena.png', '4.2.01.png', '4.2.06.png', '4.2.07.png', '5.3.01.png']
 M = [512, 1024]
-K = [i for i in range(50, 1000, 50)]
+K = [i for i in range(50, 512, 50)]
 
 os.system("rm -rf images")
 os.mkdir("images")
@@ -29,32 +30,27 @@ def processing_images(alg):
     for image in images:
         os.mkdir(f"images/{alg.__name__}/{image[:image.find(".png")]}")
 
-        for m in M:
-            for k in K:
-                rec = alg(f"../misc/{image}", dct(512), k, m)
+        for k in K:
+            try:
+                m = 256
+                rec = alg(f"../misc/{image}", dct(256), k, m)
                 cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
-                print(rec.get_Image())
-                db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 512, 512)
+                db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 256, 256)
+            except:
                 try:
-                    rec = alg(f"../misc/{image}", dct(256), k, m)
+                    m = 512
+                    rec = alg(f"../misc/{image}", dct(512), k, m)
                     cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
-                    print(rec.get_Image())
-                    db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 256, 256)
+                    db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 512, 512)
                 except:
                     try:
-                        rec = alg(f"../misc/{image}", dct(512), k, m)
+                        m = 1024
+                        rec = alg(f"../misc/{image}", dct(1024), k, m)
                         cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
-                        print(rec.get_Image())
-                        db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 512, 512)
+                        db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 1024, 1024)
                     except:
-                        try:
-                            rec = alg(f"../misc/{image}", dct(1024), k, m)
-                            cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
-                            print(rec.get_Image())
-                            db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 1024, 1024)
-                        except:
-                            print(f"image {image} is not processed in algorithm {alg.__name__}")
-                            break
+                        print(f"image {image} is not processed in algorithm {alg.__name__}")
+                        break
 
     t2 = time()
     print(f"algorithm {alg.__name__} take {round((t2-t1) / 60), 2}min")

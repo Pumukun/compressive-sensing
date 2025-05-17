@@ -1,77 +1,61 @@
-import numpy as np
-from matplotlib import pyplot as plt
-import cv2
-import os
-from os import listdir
-from os.path import isfile, join
-
-from framework import ImageCS, omp, dct
 import db
+from framework import dct, omp
+import os
+import cv2
+import threading
+from time import time
+import numpy as np
 
-#M = [32, 64, 128, 256]
-#K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
-
-#M = [128]
-#K = [20]
-
-M = [256]
-K = range(10, 20, 2)
-
-mm = []
-kk = []
-psnr = []
-cr = []
-
-onlyfiles = [f for f in listdir("../misc/") if isfile(join("../misc/", f))]
 try:
-    os.mkdir("images/omp")
-    os.remove("images/omp")
+    db.create_table()
+    db.delete_all()
+    print("----------------")
+    print("database created")
+    print("----------------")
 except:
-    pass
+    print("DB troubles")
 
-im_cnt = 0
+algorithms = [omp]
+images = [f for f in os.listdir("../misc/") if os.path.isfile(os.path.join("../misc/", f))]
+images = ['lena.png', '4.2.01.png', '4.2.06.png', '4.2.07.png', '5.3.01.png']
+M = [512, 1024]
+K = [i for i in range(50, 512, 50)]
 
-for i in onlyfiles:
-    try:
-        os.mkdir(f"images/omp/{i}")
-    except:
-        print(i)
-    for m in M:
+os.system("rm -rf images")
+os.mkdir("images")
+
+def processing_images(alg):
+    global images, M, K
+    t1 = time()
+    for image in images:
+        os.mkdir(f"images/{alg.__name__}/{image[:image.find(".png")]}")
+
         for k in K:
             try:
-
-                rec = omp(f"../misc/{i}", dct(512), m, k)
-                cv2.imwrite(f"images/omp/{i}/{i[:i.find(".png")]}_omp_M{m}_K{k}.png", rec.get_Image())
-
-                print(f"---------- IMAGE {im_cnt} ----------")
-                print("M:   ", m)
-                print("K:   ", k)
-                print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
-
-                mm.append(m)
-                kk.append(k)
-                psnr.append(rec.get_PSNR())
-                cr.append(rec.get_CR())
-
-                db.add_result(f"images/omp/{i}/{i[:i.find(".png")]}_omp_M{m}_K{k}.png", "OMP", rec.get_PSNR(), rec.get_CR(), k, m, 512, 512)
-
-                im_cnt += 1
+                m = 256
+                rec = alg(f"../misc/{image}", dct(256), k, m)
+                cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 256, 256)
             except:
-                break
+                try:
+                    m = 512
+                    rec = alg(f"../misc/{image}", dct(512), k, m)
+                    cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                    db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 512, 512)
+                except:
+                    try:
+                        m = 1024
+                        rec = alg(f"../misc/{image}", dct(1024), k, m)
+                        cv2.imwrite(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", rec.get_Image())
+                        db.add_result(f"images/{alg.__name__}/{image[:image.find(".png")]}/M{m}_K{k}.png", f"{image[:image.find(".png")]}", f"{alg.__name__}", rec.get_PSNR(), rec.get_SSIM(), rec.get_CR(), k, m, 1024, 1024)
+                    except:
+                        print(f"image {image} is not processed in algorithm {alg.__name__}")
+                        break
 
-print("mm = ", mm)
-print("kk = ", kk)
-print("psnr = ", psnr)
-print("cr = ", cr)
+    t2 = time()
+    print(f"algorithm {alg.__name__} take {round((t2-t1) / 60), 2}min")
 
-
-# for i in range(0, len(M)):
-#     plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
-
-plt.plot(cr, psnr, marker="o")
-
-plt.xlabel("K")
-plt.ylabel("PSNR")
-plt.grid()
-plt.legend()
-plt.show()
+for alg in algorithms:
+    os.mkdir(f"images/{alg.__name__}")
+    x = threading.Thread(target=processing_images, args=(alg, ))
+    x.start()
