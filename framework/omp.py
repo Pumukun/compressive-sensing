@@ -63,6 +63,7 @@ def cs_omp(y: np.ndarray, Phi: np.ndarray, K: int) -> Tuple[np.ndarray, Tuple[np
     result: np.ndarray = np.zeros((N, 1))
 
     for j in range(K):
+        
         product: np.ndarray = np.fabs(np.dot(Phi.T, residual))
         pos: int = int(np.argmax(product))
         index[pos] = 1

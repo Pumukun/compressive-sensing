@@ -7,7 +7,7 @@ from typing import Tuple
 
 def cosamp(image_path: str, matrix: np.ndarray, s: int, M: int) -> ImageCS:
     '''
-    CoSaMP 2d function. 
+    CoSaMP 2d функция. 
         image_path - путь к сжимаемому изображению (изображение квадратное, цветное/ЧБ). 
         matrix - базисная матрица размера NxN. 
         s - sparsity. 

@@ -1,5 +1,5 @@
 import db
-from framework import dct, brgp, omp, sp, cosamp
+from framework import dct, brgp, omp, sp, cosamp, fft
 import os
 import cv2
 import threading
