@@ -1,55 +1,86 @@
-import numpy as np
-from matplotlib import pyplot as plt
+import os
+import threading
+from time import time
+import argparse
 import cv2
+import numpy as np
+from PIL import Image
+from matplotlib import pyplot as plt
 
-from framework import ImageCS, sp, dct
+import db
+from framework import ImageCS, dct, sp
 
-#M = [32, 64, 128, 256]
-#K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
+parser = argparse.ArgumentParser()
+parser.add_argument('-r', action='store_true', help='reset db, delete output images')
+parser.add_argument('-s', action='store_true', help='skip process()')
+args = parser.parse_args()
 
-#M = [128]
-#K = [20]
+images: list[str] = ['lena.png', '4.2.01.png', '4.2.06.png', '4.2.07.png', '5.3.01.png']
+M = [512, 1024]
+K = list(range(20, 50, 2))
 
-M = [128]
-K = range(10, 50, 2)
+def process() -> None:
+    for image in images:
+        img = Image.open(f"../misc/{image}")
+        _, h = img.size
 
-mm = []
-kk = []
-psnr = []
-cr = []
+        for k in K:
+            new_pwd = f"images/sp/{image[:image.find(".png")]}/M{h}_K{k}.png"
+            rec: ImageCS = sp(f"../misc/{image}", dct(h), h, k)
+            cv2.imwrite(new_pwd, rec.get_Image())
+            db.add_result(
+                new_pwd,
+                image,
+                "sp",
+                rec.get_PSNR(),
+                rec.get_SSIM(),
+                rec.get_CR(),
+                k,
+                h,
+                h,
+                h
+            )
 
-im_cnt = 0
-for m in M:
-    for k in K:
-        print(f"---------- IMAGE {im_cnt} ----------")
-        print("M:   ", m)
-        print("K:   ", k)
+def plot() -> None:
+    res = db.get_result_by_alg("sp")
+    print(res)
 
-        rec = sp("../lena.png", dct(256), m, k)
-        cv2.imwrite(f"lena_sp_M{m}_K{k}.png", rec.get_Image())
-        print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
+    for name in images:
+        psnr = []
+        cr = []
 
-        mm.append(m)
-        kk.append(k)
-        psnr.append(rec.get_PSNR())
-        cr.append(rec.get_CR())
+        for i in res:
+            if i[1] == name:
+                psnr.append( i[4])
+                cr.append(i[6])
 
-        im_cnt += 1
-
-print("mm = ", mm)
-print("kk = ", kk)
-print("psnr = ", psnr)
-print("cr = ", cr)
+        plt.plot(cr, psnr, color='red', marker='o')
+        plt.title(name)
+        plt.xlabel("Стеепнь сжатия (%)")
+        plt.ylabel("PSNR, dB")
+        plt.grid()
+        plt.show()
 
 
-# for i in range(0, len(M)):
-#     plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
+if __name__ == "__main__":
+    if args.r:
+        try:
+            db.create_table()
+            db.delete_all()
+            print("----------------")
+            print("database created")
+            print("----------------")
+        except:
+            print("DB troubles")
 
-plt.plot(cr, psnr, marker="o")
+        os.system("rm -rf images")
+        os.mkdir("images")
+        os.mkdir("images/sp")
 
-plt.xlabel("CR")
-plt.ylabel("PSNR")
-plt.grid()
-plt.legend()
-plt.show()
+        for image in images:
+            os.mkdir(f"images/sp/{image[:image.find(".png")]}")
 
+    if not args.s:
+        process()
+
+    plot()
