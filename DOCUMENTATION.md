@@ -1,119 +1,119 @@
-# Документация: Compressive Sensing Framework
+# Compressive Sensing Framework — Documentation
 
-## Содержание
+## Table of Contents
 
-1. [Обзор проекта](#обзор-проекта)
-2. [Теоретическая основа](#теоретическая-основа)
-3. [Архитектура фреймворка](#архитектура-фреймворка)
-   - [Структура модулей](#структура-модулей)
-   - [Диаграмма классов](#диаграмма-классов)
-   - [Поток данных](#поток-данных)
-4. [Компоненты фреймворка](#компоненты-фреймворка)
-   - [Алгоритмы восстановления](#алгоритмы-восстановления)
-   - [Преобразования](#преобразования)
-   - [Метрики качества](#метрики-качества)
-   - [Шумовые функции](#шумовые-функции)
-   - [Фильтры сглаживания](#фильтры-сглаживания)
-   - [Класс ImageCS](#класс-imagecs)
-5. [Тестовая инфраструктура](#тестовая-инфраструктура)
-6. [Руководство по интеграции](#руководство-по-интеграции)
-7. [Масштабирование](#масштабирование)
+1. [Project Overview](#project-overview)
+2. [Theoretical Background](#theoretical-background)
+3. [Framework Architecture](#framework-architecture)
+   - [Module Structure](#module-structure)
+   - [Class Diagram](#class-diagram)
+   - [Data Flow](#data-flow)
+4. [Framework Components](#framework-components)
+   - [Recovery Algorithms](#recovery-algorithms)
+   - [Transforms](#transforms)
+   - [Quality Metrics](#quality-metrics)
+   - [Noise Functions](#noise-functions)
+   - [Smoothing Filters](#smoothing-filters)
+   - [ImageCS Class](#imagecs-class)
+5. [Testing Infrastructure](#testing-infrastructure)
+6. [Integration Guide](#integration-guide)
+7. [Scaling](#scaling)
 8. [API Reference](#api-reference)
 
 ---
 
-## Обзор проекта
+## Project Overview
 
-**Compressive Sensing Framework** — это Python-фреймворк для сжатия и восстановления 2D изображений методами компрессивного зондирования (Compressive Sensing, CS). Фреймворк реализует несколько алгоритмов разреженного восстановления сигнала, инструменты оценки качества результатов, средства добавления шума и фильтрации изображений.
+**Compressive Sensing Framework** is a Python framework for compression and reconstruction of 2D images using Compressive Sensing (CS) methods. The framework implements several sparse signal recovery algorithms along with quality assessment tools, noise generation utilities, and image smoothing filters.
 
-### Ключевые возможности
+### Key Features
 
-- Реализация алгоритмов CS: **OMP**, **CoSaMP**, **SP**, **BRGP**
-- Преобразование Дискретного Косинусного Преобразования (DCT) как базисная матрица
-- Метрики качества: **CR** (Compression Ratio), **PSNR**, **SSIM**
-- Добавление шума: Gaussian, Poisson, Salt-and-Pepper, Speckle
-- Фильтры сглаживания: Mean, Median, Gaussian, Bilateral
-- Сохранение результатов тестирования в SQLite базу данных
-- Визуализация результатов через Matplotlib
+- CS algorithm implementations: **OMP**, **CoSaMP**, **SP**, **BRGP**
+- Discrete Cosine Transform (DCT) as the sparsifying basis matrix
+- Quality metrics: **CR** (Compression Ratio), **PSNR**, **SSIM**
+- Noise generation: Gaussian, Poisson, Salt-and-Pepper, Speckle
+- Smoothing filters: Mean, Median, Gaussian, Bilateral
+- Test result persistence in an SQLite database
+- Result visualisation via Matplotlib
 
 ---
 
-## Теоретическая основа
+## Theoretical Background
 
-Компрессивное зондирование (CS) позволяет восстанавливать разреженный сигнал из числа измерений, значительно меньшего, чем требует теорема Найквиста–Шеннона.
+Compressive Sensing allows a sparse signal to be recovered from far fewer measurements than the Nyquist–Shannon sampling theorem would require.
 
-### Математическая модель
+### Mathematical Model
 
-Пусть `x ∈ ℝᴺ` — разреженный сигнал (изображение в базисе `Ψ`). Измеренный вектор:
+Let `x ∈ ℝᴺ` be a sparse signal (an image represented in basis `Ψ`). The measurement vector is:
 
 ```
 y = Φ · Ψ · s = Θ · s
 ```
 
-где:
-- `Φ ∈ ℝᴹˣᴺ` — матрица измерений (`M << N`)
-- `Ψ ∈ ℝᴺˣᴺ` — базисная матрица (DCT)
-- `s ∈ ℝᴺ` — разреженный вектор коэффициентов
-- `Θ = Φ · Ψ` — матрица зондирования
+where:
+- `Φ ∈ ℝᴹˣᴺ` — measurement matrix (M is much smaller than N)
+- `Ψ ∈ ℝᴺˣᴺ` — sparsifying basis matrix (DCT)
+- `s ∈ ℝᴺ` — sparse coefficient vector
+- `Θ = Φ · Ψ` — sensing matrix
 
-Задача восстановления: найти `s` такое, что `‖s‖₀` минимально при условии `Θ·s ≈ y`.
+Recovery problem: find `s` such that `‖s‖₀` is minimised subject to `Θ·s ≈ y`.
 
-### Схема обработки изображения
+### Processing Pipeline
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Compressive Sensing Pipeline                      │
-│                                                                       │
-│  Изображение → Матрица Φ → y = Φ·x → Алгоритм CS → x̂ → Ψ·x̂       │
-│  (NxN)          (MxN)        (MxN)    восстановление   (NxN)         │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Compressive Sensing Pipeline                       │
+│                                                                        │
+│  Image  →  Matrix Φ  →  y = Φ·x  →  CS Algorithm  →  x̂  →  Ψ·x̂   │
+│  (NxN)      (MxN)         (MxN)       recovery          (NxN)         │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Архитектура фреймворка
+## Framework Architecture
 
-### Структура модулей
+### Module Structure
 
 ```
 compressive-sensing/
-├── framework/                  # Основной пакет фреймворка
-│   ├── __init__.py             # Экспорт публичного API
-│   ├── omp.py                  # Алгоритм OMP
-│   ├── cosamp.py               # Алгоритм CoSaMP
-│   ├── sp.py                   # Алгоритм SP (Subspace Pursuit)
-│   ├── brgp.py                 # Алгоритм BRGP
-│   ├── transform.py            # DCT-преобразование
-│   ├── metrics.py              # Метрики качества (CR, PSNR, SSIM)
-│   ├── noise.py                # Функции добавления шума
-│   ├── smooth.py               # Фильтры сглаживания
-│   └── utils.py                # Вспомогательный класс ImageCS
-├── test/                       # Тестовые скрипты
-│   ├── omp_test.py             # Тест OMP
-│   ├── cosamp_test.py          # Тест CoSaMP
-│   ├── sp_test.py              # Тест SP
-│   ├── brgp_test.py            # Тест BRGP
-│   ├── all_algs_test.py        # Комплексный тест всех алгоритмов
-│   ├── plot_test.py            # Визуализация результатов
-│   ├── db/                     # Модуль работы с БД
+├── framework/                  # Main framework package
+│   ├── __init__.py             # Public API exports
+│   ├── omp.py                  # OMP algorithm
+│   ├── cosamp.py               # CoSaMP algorithm
+│   ├── sp.py                   # SP (Subspace Pursuit) algorithm
+│   ├── brgp.py                 # BRGP algorithm
+│   ├── transform.py            # DCT transform
+│   ├── metrics.py              # Quality metrics (CR, PSNR, SSIM)
+│   ├── noise.py                # Noise generation functions
+│   ├── smooth.py               # Smoothing filters
+│   └── utils.py                # ImageCS helper class
+├── test/                       # Test scripts
+│   ├── omp_test.py             # OMP test
+│   ├── cosamp_test.py          # CoSaMP test
+│   ├── sp_test.py              # SP test
+│   ├── brgp_test.py            # BRGP test
+│   ├── all_algs_test.py        # Combined test of all algorithms
+│   ├── plot_test.py            # Result visualisation
+│   ├── db/                     # Database module
 │   │   ├── __init__.py
-│   │   ├── db.py               # CRUD-операции SQLite
-│   │   └── create_db.sql       # SQL-схема
-│   └── plot/                   # Модуль визуализации
+│   │   ├── db.py               # SQLite CRUD operations
+│   │   └── create_db.sql       # SQL schema
+│   └── plot/                   # Plotting module
 │       ├── __init__.py
-│       └── plot.py             # Построение графиков
-├── misc/                       # Набор тестовых изображений
-├── requirements.txt            # Зависимости Python
-├── setup.sh                    # Скрипт установки (Linux)
-└── README.md                   # Краткое описание проекта
+│       └── plot.py             # Chart generation
+├── misc/                       # Sample test images
+├── requirements.txt            # Python dependencies
+├── setup.sh                    # Linux setup script
+└── README.md                   # Brief project description
 ```
 
-### Диаграмма модулей (зависимости)
+### Module Dependency Diagram
 
 ```mermaid
 graph TD
     subgraph framework["📦 framework"]
-        INIT["__init__.py<br/>(публичный API)"]
+        INIT["__init__.py<br/>(public API)"]
         OMP["omp.py"]
         COSAMP["cosamp.py"]
         SP["sp.py"]
@@ -168,7 +168,7 @@ graph TD
     PLOT --> DB
 ```
 
-### Диаграмма классов
+### Class Diagram
 
 ```mermaid
 classDiagram
@@ -244,246 +244,295 @@ classDiagram
         +delete_all() None
     }
 
-    OMP --> ImageCS : возвращает
-    CoSaMP --> ImageCS : возвращает
-    SP --> ImageCS : возвращает
-    BRGP --> ImageCS : возвращает
-    BRGP --> OMP : использует cs_omp
-    BRGP --> SP : использует cs_sp
-    OMP --> Metrics : вычисляет CR/PSNR
-    CoSaMP --> Metrics : вычисляет CR/PSNR/SSIM
-    SP --> Metrics : вычисляет CR/PSNR
-    BRGP --> Metrics : вычисляет CR/PSNR
+    OMP --> ImageCS : returns
+    CoSaMP --> ImageCS : returns
+    SP --> ImageCS : returns
+    BRGP --> ImageCS : returns
+    BRGP --> OMP : uses cs_omp
+    BRGP --> SP : uses cs_sp
+    OMP --> Metrics : computes CR/PSNR
+    CoSaMP --> Metrics : computes CR/PSNR/SSIM
+    SP --> Metrics : computes CR/PSNR
+    BRGP --> Metrics : computes CR/PSNR
 ```
 
-### Поток данных
+### Data Flow
 
 ```mermaid
 flowchart LR
-    A[🖼️ Входное изображение\nimage_path] --> B[Загрузка в оттенках серого\ncv2.imread / PIL.Image]
-    B --> C[Матрица изображения\nim: NxN numpy array]
-    C --> D[Матрица измерений\nΦ ~ N0,1/M : MxN]
-    C --> E[Базисная матрица\nΨ = DCT: NxN]
-    D & E --> F[Матрица зондирования\nΘ = Φ·Ψ : MxN]
-    C & D --> G[Вектор измерений\ny = Φ·im : MxW]
-    G & F --> H{Алгоритм CS\nколонка за колонкой}
-    H --> |OMP| I1[cs_omp\ny, Θ, K]
-    H --> |CoSaMP| I2[cs_cosamp\ny, s, Θ]
-    H --> |SP| I3[cs_sp\ny, Θ, K]
-    H --> |BRGP| I4[cs_brgp\ny, Θ, K, Candidate]
-    I1 & I2 & I3 & I4 --> J[Разреженная матрица\nsparse_rec_1d: NxN]
-    J --> K[Восстановленное изображение\nimg_rec = Ψ·sparse_rec_1d]
-    K --> L[Метрики качества\nCR / PSNR / SSIM]
-    K & L --> M[📦 ImageCS\nget_Image / get_CR / get_PSNR / get_SSIM]
+    A["Input image\nimage_path"] --> B["Load as grayscale\ncv2.imread / PIL.Image"]
+    B --> C["Image matrix\nim: NxN numpy array"]
+    C --> D["Measurement matrix\nΦ ~ N(0,1/M) : MxN"]
+    C --> E["Basis matrix\nΨ = DCT: NxN"]
+    D & E --> F["Sensing matrix\nΘ = Φ·Ψ : MxN"]
+    C & D --> G["Measurement vector\ny = Φ·im : MxW"]
+    G & F --> H{"CS Algorithm\ncolumn by column"}
+    H --> |OMP| I1["cs_omp\ny, Θ, K"]
+    H --> |CoSaMP| I2["cs_cosamp\ny, s, Θ"]
+    H --> |SP| I3["cs_sp\ny, Θ, K"]
+    H --> |BRGP| I4["cs_brgp\ny, Θ, K, Candidate"]
+    I1 & I2 & I3 & I4 --> J["Sparse matrix\nsparse_rec_1d: NxN"]
+    J --> K["Reconstructed image\nimg_rec = Ψ·sparse_rec_1d"]
+    K --> L["Quality metrics\nCR / PSNR / SSIM"]
+    K & L --> M["📦 ImageCS\nget_Image / get_CR / get_PSNR / get_SSIM"]
 ```
 
 ---
 
-## Компоненты фреймворка
+## Framework Components
 
-### Алгоритмы восстановления
+### Recovery Algorithms
 
-Все алгоритмы работают с 2D-изображениями, обрабатывая изображение **колонка за колонкой** (column-by-column approach): каждый столбец пикселей восстанавливается независимо как одномерная задача CS.
+All algorithms work with 2D images using a **column-by-column** approach: each pixel column is recovered independently as a 1D CS problem.
 
 #### OMP — Orthogonal Matching Pursuit
 
-**Файл:** `framework/omp.py`  
-**Автор:** Vladislav Gerda
+**File:** `framework/omp.py`  
+**Author:** Vladislav Gerda
 
-**Описание:** OMP — жадный алгоритм, последовательно выбирающий наиболее коррелированные столбцы матрицы зондирования с текущим остатком, а затем проецирует измеренный сигнал на выбранное подпространство.
+**Description:** OMP is a greedy algorithm that iteratively selects the column of the sensing matrix most correlated with the current residual, then projects the measured signal onto the selected subspace.
 
-**Принцип работы:**
+**Pseudocode:**
 
-```mermaid
-flowchart TD
-    A[Инициализация:\nresidual = y\nindex = -1 для всех] --> B[Итерация j = 1..K]
-    B --> C["product = |Φᵀ · residual|"]
-    C --> D[pos = argmax product]
-    D --> E[index pos = 1]
-    E --> F["a = pinv(Φ_selected) · y"]
-    F --> G["residual = y - Φ_selected · a"]
-    G --> B
-    B --> |K итераций| H["result index_selected = a"]
-    H --> I[Вернуть разреженный вектор]
+```
+function cs_omp(y, Φ, K):
+    residual ← y
+    index    ← array of -1, length N        // support mask
+
+    for j = 1 to K:
+        product ← |Φᵀ · residual|           // correlation with each column
+        pos     ← argmax(product)           // most correlated column
+        index[pos] ← 1                      // add to support
+
+        a        ← pinv(Φ[:, index≥0]) · y  // least-squares on support
+        residual ← y − Φ[:, index≥0] · a   // update residual
+
+    result[index≥0] ← a
+    return result
 ```
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `image_path` | `str` | Путь к изображению |
-| `matrix` | `np.ndarray` | Базисная матрица NxN (DCT) |
-| `M` | `int` | Размер матрицы измерений (M < N) |
-| `K` | `int` | Количество итераций (= sparsity) |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `image_path` | `str` | Path to the input image |
+| `matrix` | `np.ndarray` | Basis matrix NxN (DCT) |
+| `M` | `int` | Number of measurements (M < N) |
+| `K` | `int` | Number of iterations (= sparsity level) |
 
-**Сложность:** O(K · M · N) на один столбец.
+**Complexity:** O(K · M · N) per column.
 
 ---
 
 #### CoSaMP — Compressive Sampling Matching Pursuit
 
-**Файл:** `framework/cosamp.py`  
-**Автор:** Vladislav Gerda
+**File:** `framework/cosamp.py`  
+**Author:** Vladislav Gerda
 
-**Описание:** CoSaMP расширяет идею OMP, выбирая на каждом шаге `2s` лучших кандидатов, объединяя их с текущим поддержанием, решая задачу наименьших квадратов и усекая до `s` наибольших компонент. Алгоритм итерирует до сходимости.
+**Description:** CoSaMP extends OMP by selecting `2s` best candidate indices at each step, merging them with the current support, solving a least-squares problem, and pruning back to the `s` largest components. The algorithm iterates until convergence.
 
-**Принцип работы:**
+**Pseudocode:**
 
-```mermaid
-flowchart TD
-    A[Инициализация:\nresidual = y\nresult = 0] --> B[Итерация j = 1..K]
-    B --> C["product = |Φᵀ · residual|"]
-    C --> D["top_k_idx = 2s наибольших индексов\n∪ nonzero(result)"]
-    D --> E["Решение МНК:\nx[top_k_idx] = lstsq(Φ_selected, y)"]
-    E --> F["Усечение:\nоставить только s наибольших x"]
-    F --> G["residual = y - Φ · x"]
-    G --> H{Критерий остановки\n‖residual‖ < ε\nили ‖Δresidual‖ < ε}
-    H --> |Нет| B
-    H --> |Да| I["Вернуть |x|"]
+```
+function cs_cosamp(y, s, Φ, ε=1e-10, K=1000):
+    residual ← y
+    result   ← zeros(N)
+
+    for j = 1 to K:
+        product    ← |Φᵀ · residual|
+        top_k_idx  ← indices of 2s largest values in product
+        top_k_idx  ← top_k_idx ∪ nonzero(result)   // merge with current support
+
+        x           ← zeros(N)
+        x[top_k_idx] ← lstsq(Φ[:, top_k_idx], y)  // constrained least squares
+        set all but the s largest-magnitude entries of x to 0
+
+        result       ← x
+        residual_old ← residual
+        residual     ← y − Φ · result
+
+        if ‖residual‖ < ε  or  ‖residual − residual_old‖ < ε:
+            break
+
+    return |result|
 ```
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `image_path` | `str` | Путь к изображению |
-| `matrix` | `np.ndarray` | Базисная матрица NxN (DCT) |
-| `s` | `int` | Разреженность сигнала (sparsity) |
-| `M` | `int` | Размер матрицы измерений |
-| `epsilon` | `float` | Допустимая погрешность (по умолчанию 1e-10) |
-| `K` | `int` | Максимальное число итераций (по умолчанию 1000) |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `image_path` | `str` | Path to the input image |
+| `matrix` | `np.ndarray` | Basis matrix NxN (DCT) |
+| `s` | `int` | Signal sparsity level |
+| `M` | `int` | Number of measurements |
+| `epsilon` | `float` | Convergence tolerance (default 1e-10) |
+| `K` | `int` | Maximum number of iterations (default 1000) |
 
 ---
 
 #### SP — Subspace Pursuit
 
-**Файл:** `framework/sp.py`  
-**Автор:** Grigory Demchenko
+**File:** `framework/sp.py`  
+**Author:** Grigory Demchenko
 
-**Описание:** SP поддерживает фиксированный набор поддержания размера `K` на каждой итерации: расширяет набор на `K` новых кандидатов, решает ограниченную LS-задачу и оставляет `K` наибольших компонент.
+**Description:** SP maintains a fixed support set of size `K` at every iteration: it expands the set with `K` new candidates, solves a constrained LS problem over the union, then retains only the `K` largest-magnitude components.
 
-**Принцип работы:**
+**Pseudocode:**
 
-```mermaid
-flowchart TD
-    A[Инициализация:\nresidual = y\nindex = ∅] --> B[Итерация j = 1..K]
-    B --> C["product = |Φᵀ · residual|"]
-    C --> D["top_k_idx = K наибольших индексов"]
-    D --> E["index = index ∪ top_k_idx"]
-    E --> F["x_temp = pinv(Φ_index) · y"]
-    F --> G["index = K наибольших по |x|"]
-    G --> H["residual = y - Φ · x"]
-    H --> B
-    B --> |K итераций| I[Вернуть x, index]
+```
+function cs_sp(y, Φ, K):
+    residual ← y
+    index    ← ∅                              // current support set
+    x        ← zeros(N)
+
+    for j = 1 to K:
+        product    ← |Φᵀ · residual|
+        top_k_idx  ← indices of K largest values in product
+        index      ← index ∪ top_k_idx       // expand support
+
+        x_temp     ← pinv(Φ[:, index]) · y  // least squares on support
+        x[index]   ← x_temp
+
+        index      ← indices of K largest values in |x|  // prune to K
+        residual   ← y − Φ · x
+
+    return x, index
 ```
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `image_path` | `str` | Путь к изображению |
-| `matrix` | `np.ndarray` | Базисная матрица NxN (DCT) |
-| `M` | `int` | Размер матрицы измерений |
-| `K` | `int` | Количество итераций и размер поддержания |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `image_path` | `str` | Path to the input image |
+| `matrix` | `np.ndarray` | Basis matrix NxN (DCT) |
+| `M` | `int` | Number of measurements |
+| `K` | `int` | Number of iterations and support set size |
 
 ---
 
 #### BRGP — Backtracking Refined Greedy Pursuit
 
-**Файл:** `framework/brgp.py`  
-**Автор:** Grigory Demchenko
+**File:** `framework/brgp.py`  
+**Author:** Grigory Demchenko
 
-**Описание:** BRGP — гибридный алгоритм, использующий пересечение кандидатных множеств SP и OMP как начальное приближение, а затем итеративно уточняющий поддержание с механизмом отката (backtracking). Обеспечивает лучшее качество восстановления по сравнению с OMP и SP по отдельности.
+**Description:** BRGP is a hybrid algorithm. It initialises the support as the intersection of the SP and OMP candidate sets, then iteratively refines the support with a backtracking mechanism (reverting to the last saved state when the residual worsens). A final SP-style refinement phase shrinks the support from size K down to 0.
 
-**Принцип работы:**
+**Pseudocode:**
 
-```mermaid
-flowchart TD
-    A[Вход: y, Θ, K] --> B[Запуск cs_sp → Candidate_sp]
-    A --> C[Запуск cs_omp → Candidate_omp]
-    B & C --> D["Candidate_BRGP = Candidate_sp ∩ Candidate_omp"]
-    D --> E[cs_brgp: начальное восстановление\nна Candidate_BRGP]
-    E --> F["r = y - Φ · x"]
-    F --> G["F = {i : |Φᵀr|ᵢ > u · max|Φᵀr|}"]
-    G --> H["Candidate = Candidate ∪ F"]
-    H --> I{"len Candidate < K ?"}
-    I --> |Да, улучшение| J["Расширить Candidate"]
-    I --> |Да, ухудшение| K["Откат к Candidate_save"]
-    J & K --> I
-    I --> |len ≥ K| L["Фаза SP:\nT = K, уменьшать T·u пока T > 0"]
-    L --> M[Вернуть x]
+```
+function brgp(y, Φ, K, u=0.8):
+    // --- Initialisation ---
+    _, Candidate_sp  ← cs_sp(y, Φ, K)
+    _, Candidate_omp ← cs_omp(y, Φ, K)
+    Candidate        ← Candidate_sp ∩ Candidate_omp  // intersection as seed
+
+    x        ← pinv(Φ[:, Candidate]) · y projected onto Candidate
+    r        ← y − Φ · x
+    r_save   ← r
+    C_save   ← Candidate
+
+    // --- Expansion phase ---
+    F         ← { i : |Φᵀr|ᵢ > u · max|Φᵀr| }
+    Candidate ← Candidate ∪ F
+    x, r      ← recompute(Φ, Candidate, y)
+
+    while len(Candidate) < K:
+        if ‖r − r_save‖ < ‖y‖:              // improvement: expand
+            C_save    ← Candidate
+            r_save    ← r
+            F         ← { i : |Φᵀr|ᵢ > u · max|Φᵀr| }
+            Candidate ← Candidate ∪ F
+        else:                                 // no improvement: backtrack
+            Candidate ← C_save
+            r         ← r_save
+            C_dif     ← complement candidates not yet in Candidate
+            F         ← argmax of pinv(Φ[:, C_dif]) · y
+            Candidate ← Candidate ∪ F
+        x, r ← recompute(Φ, Candidate, y)
+
+    // --- SP-style refinement phase ---
+    T ← K
+    while T > 0:
+        top_T     ← indices of T largest values in |Φᵀr|
+        Candidate ← Candidate ∪ top_T
+        keep_K    ← indices of K largest values in |pinv(Φ[:, Candidate]) · y|
+        Candidate ← Candidate[keep_K]
+        x, r      ← recompute(Φ, Candidate, y)
+        T         ← floor(T · u)
+
+    return x
 ```
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `image_path` | `str` | Путь к изображению |
-| `matrix` | `np.ndarray` | Базисная матрица NxN (DCT) |
-| `M` | `int` | Размер матрицы измерений |
-| `K` | `int` | Количество итераций |
-| `u` | `float` | Коэффициент отката (0 < u < 1, по умолчанию 0.8) |
-
----
-
-### Сравнение алгоритмов
-
-| Характеристика | OMP | CoSaMP | SP | BRGP |
-|----------------|-----|--------|----|------|
-| Тип | Жадный | Итеративный | Итеративный | Гибридный |
-| Гарантия сходимости | Нет | Да | Да | Частичная |
-| Число итераций | Фикс. K | До сходимости | Фикс. K | Адаптивное |
-| Использует другие алгоритмы | Нет | Нет | Нет | OMP + SP |
-| Метрики | CR, PSNR | CR, PSNR, SSIM | CR, PSNR | CR, PSNR |
-| Вычислительная сложность | Средняя | Высокая | Средняя | Высокая |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `image_path` | `str` | Path to the input image |
+| `matrix` | `np.ndarray` | Basis matrix NxN (DCT) |
+| `M` | `int` | Number of measurements |
+| `K` | `int` | Number of iterations |
+| `u` | `float` | Backtracking coefficient (0 < u < 1, default 0.8) |
 
 ---
 
-### Преобразования
+### Algorithm Comparison
+
+| Property | OMP | CoSaMP | SP | BRGP |
+|----------|-----|--------|----|------|
+| Type | Greedy | Iterative | Iterative | Hybrid |
+| Convergence guarantee | No | Yes | Yes | Partial |
+| Iteration count | Fixed K | Until convergence | Fixed K | Adaptive |
+| Uses other algorithms | No | No | No | OMP + SP |
+| Available metrics | CR, PSNR | CR, PSNR, SSIM | CR, PSNR | CR, PSNR |
+| Computational cost | Medium | High | Medium | High |
+
+---
+
+### Transforms
 
 #### DCT — Discrete Cosine Transform
 
-**Файл:** `framework/transform.py`
+**File:** `framework/transform.py`
 
 ```python
 def dct(N: int) -> np.ndarray
 ```
 
-Генерирует ортонормированную матрицу DCT размером `NxN`. Используется как базисная матрица `Ψ` для представления изображений в разреженном виде — изображения, как правило, имеют малое число ненулевых DCT-коэффициентов.
+Generates an orthonormal DCT matrix of size `NxN`. Used as the sparsifying basis matrix `Ψ` — natural images typically have very few non-zero DCT coefficients.
 
-**Формула k-го столбца:**
+**Formula for column k:**
 
 ```
 ψₖ[n] = cos(n · k·π/N),  n = 0..N-1
-ψₖ = (ψₖ - mean(ψₖ)) / ‖ψₖ‖  (для k > 0)
+ψₖ = (ψₖ − mean(ψₖ)) / ‖ψₖ‖   (for k > 0)
 ```
 
-**Пример использования:**
+**Example:**
 
 ```python
 from framework import dct
-Psi = dct(256)  # Базисная матрица 256x256
+Psi = dct(256)  # 256x256 basis matrix
 ```
 
 ---
 
-### Метрики качества
+### Quality Metrics
 
-**Файл:** `framework/metrics.py`
+**File:** `framework/metrics.py`
 
-#### CR — Compression Ratio (Коэффициент сжатия)
+#### CR — Compression Ratio
 
 ```python
 def CR(image_source: np.ndarray, image_compressed: np.ndarray) -> float
 ```
 
-Отношение числа ненулевых элементов оригинального изображения к числу ненулевых элементов разреженного представления.
+Ratio of the number of non-zero elements in the original image to the number of non-zero elements in its sparse representation.
 
 ```
 CR = count(nonzero(x)) / count(nonzero(sparse_x))
 ```
 
-> **Примечание:** CR > 1 означает, что разреженное представление содержит меньше ненулевых элементов, т. е. сигнал действительно разреженный.
+> **Note:** CR > 1 means the sparse representation has fewer non-zero elements, i.e. the signal is genuinely sparse.
 
 #### PSNR — Peak Signal-to-Noise Ratio
 
@@ -491,7 +540,7 @@ CR = count(nonzero(x)) / count(nonzero(sparse_x))
 def PSNR(original: np.ndarray, compressed: np.ndarray) -> float
 ```
 
-Пиковое отношение сигнал/шум в дБ. Использует `skimage.metrics.peak_signal_noise_ratio`. Чем выше значение, тем лучше качество восстановления. Значения > 30 дБ считаются приемлемыми.
+Peak signal-to-noise ratio in dB. Uses `skimage.metrics.peak_signal_noise_ratio`. Higher values indicate better reconstruction quality; values > 30 dB are generally considered acceptable.
 
 #### SSIM — Structural Similarity Index
 
@@ -499,52 +548,52 @@ def PSNR(original: np.ndarray, compressed: np.ndarray) -> float
 def SSIM(original: np.ndarray, compressed: np.ndarray) -> float
 ```
 
-Индекс структурного сходства (0–1). Использует `skimage.metrics.structural_similarity`. Значения, близкие к 1, указывают на высокое структурное сходство с оригиналом.
+Structural Similarity Index (0–1). Uses `skimage.metrics.structural_similarity`. Values close to 1 indicate high structural fidelity to the original.
 
 ---
 
-### Шумовые функции
+### Noise Functions
 
-**Файл:** `framework/noise.py`
+**File:** `framework/noise.py`
 
-| Функция | Описание | Параметры |
-|---------|----------|-----------|
-| `GaussianNoise(image_path, stdev, show)` | Гауссово размытие (`cv2.GaussianBlur`) | `stdev` — размер ядра размытия (нечётное целое: 3, 5, 7, …) |
-| `PoissonNoise(image_path, show)` | Пуассоновский шум | — |
-| `SaltAndPepperNoise(image_path, show, number_of_pixels)` | Шум "соль и перец" | `number_of_pixels` — кол-во зашумляемых пикселей |
-| `SpeckleNoise(image_path, show, variance)` | Мультипликативный шум | `variance` — дисперсия шума |
+| Function | Description | Parameters |
+|----------|-------------|------------|
+| `GaussianNoise(image_path, stdev, show)` | Gaussian blur (`cv2.GaussianBlur`) | `stdev` — kernel size (odd integer: 3, 5, 7, …) |
+| `PoissonNoise(image_path, show)` | Poisson noise | — |
+| `SaltAndPepperNoise(image_path, show, number_of_pixels)` | Salt-and-pepper noise | `number_of_pixels` — number of corrupted pixels |
+| `SpeckleNoise(image_path, show, variance)` | Speckle (multiplicative) noise | `variance` — noise variance |
 
-Все функции принимают `show: bool = True` для вывода сравнения оригинала и зашумлённого изображения через Matplotlib.
-
----
-
-### Фильтры сглаживания
-
-**Файл:** `framework/smooth.py`
-
-| Функция | Описание | Параметры |
-|---------|----------|-----------|
-| `Mean_filter(image_path, k, show)` | Усредняющий фильтр | `k` — размер ядра (кxк) |
-| `Median_filter(image_path, k, show)` | Медианный фильтр | `k` — размер ядра |
-| `Gaussian_filter(image_path, k, show)` | Гауссов фильтр | `k` — размер ядра (нечётное) |
-| `Bilateral_filter(image_path, k, show)` | Билатеральный фильтр | `k` — диаметр пикселей |
+All functions accept `show: bool = True` to display a side-by-side comparison of the original and noisy image via Matplotlib.
 
 ---
 
-### Класс ImageCS
+### Smoothing Filters
 
-**Файл:** `framework/utils.py`
+**File:** `framework/smooth.py`
 
-Контейнер для хранения результата работы алгоритма CS: восстановленного изображения и метрик качества.
+| Function | Description | Parameters |
+|----------|-------------|------------|
+| `Mean_filter(image_path, k, show)` | Averaging filter | `k` — kernel size (k×k) |
+| `Median_filter(image_path, k, show)` | Median filter | `k` — kernel size |
+| `Gaussian_filter(image_path, k, show)` | Gaussian filter | `k` — kernel size (must be odd) |
+| `Bilateral_filter(image_path, k, show)` | Bilateral filter | `k` — pixel neighbourhood diameter |
+
+---
+
+### ImageCS Class
+
+**File:** `framework/utils.py`
+
+A container that holds the result of a CS algorithm: the reconstructed image together with quality metrics.
 
 ```python
 class ImageCS:
     def __init__(self, matrix: np.ndarray, cr: float = 0.0,
                  psnr: float = 0.0, ssim: float = 0.0)
 
-    def get_Image(self) -> np.ndarray   # Данные изображения
-    def get_CR(self) -> float           # Коэффициент сжатия
-    def get_PSNR(self) -> float         # PSNR в дБ
+    def get_Image(self) -> np.ndarray   # Image data
+    def get_CR(self) -> float           # Compression ratio
+    def get_PSNR(self) -> float         # PSNR in dB
     def get_SSIM(self) -> float         # SSIM (0–1)
 
     def set_Image(self, image: np.ndarray) -> None
@@ -555,66 +604,66 @@ class ImageCS:
 
 ---
 
-## Тестовая инфраструктура
+## Testing Infrastructure
 
-### Структура тестов
+### Test Structure
 
-Тестовые скрипты расположены в директории `test/` и должны запускаться **из этой директории**.
+Test scripts are located in the `test/` directory and must be **run from within that directory**.
 
 ```
 test/
-├── omp_test.py       # Тест OMP: перебор M и K, сохранение изображений и метрик
-├── cosamp_test.py    # Тест CoSaMP
-├── sp_test.py        # Тест SP
-├── brgp_test.py      # Тест BRGP
-├── all_algs_test.py  # Параллельный тест всех алгоритмов (threading)
-├── plot_test.py      # Построение графиков из БД
-├── db/               # Модуль SQLite
-└── plot/             # Модуль визуализации
+├── omp_test.py       # OMP test: sweeps M and K, saves images and metrics
+├── cosamp_test.py    # CoSaMP test
+├── sp_test.py        # SP test
+├── brgp_test.py      # BRGP test
+├── all_algs_test.py  # Parallel test of all algorithms (threading)
+├── plot_test.py      # Plot results from DB
+├── db/               # SQLite module
+└── plot/             # Plotting module
 ```
 
-### База данных (SQLite)
+### Database (SQLite)
 
-**Файл:** `test/db/db.py`
+**File:** `test/db/db.py`
 
-Схема таблицы `results`:
+Schema of the `results` table:
 
 ```sql
 CREATE TABLE IF NOT EXISTS results (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    original_image TEXT    NOT NULL,   -- имя исходного изображения
-    pwd            TEXT    NOT NULL,   -- путь к восстановленному изображению
-    algorithm      TEXT    NOT NULL,   -- название алгоритма
-    PSNR           FLOAT,              -- метрика PSNR
-    SSIM           FLOAT,              -- метрика SSIM
-    CR             FLOAT,              -- коэффициент сжатия
-    K              INTEGER NOT NULL,   -- количество итераций
-    M              INTEGER NOT NULL,   -- размер матрицы измерений
-    height         INTEGER NOT NULL,   -- высота изображения
-    width          INTEGER NOT NULL    -- ширина изображения
+    original_image TEXT    NOT NULL,   -- source image name
+    pwd            TEXT    NOT NULL,   -- path to reconstructed image
+    algorithm      TEXT    NOT NULL,   -- algorithm name
+    PSNR           FLOAT,              -- PSNR metric
+    SSIM           FLOAT,              -- SSIM metric
+    CR             FLOAT,              -- compression ratio
+    K              INTEGER NOT NULL,   -- iteration count
+    M              INTEGER NOT NULL,   -- measurement matrix size
+    height         INTEGER NOT NULL,   -- image height
+    width          INTEGER NOT NULL    -- image width
 );
 ```
 
-### Запуск тестов
+### Running Tests
 
 ```bash
 cd test/
 
-# Тест одного алгоритма
+# Test a single algorithm
 python omp_test.py
 
-# Комплексный тест всех алгоритмов (параллельно)
+# Test all algorithms in parallel
 python all_algs_test.py
 
-# Визуализация результатов из БД
+# Plot results from the database
 python plot_test.py
 ```
 
 ---
 
-## Руководство по интеграции
+## Integration Guide
 
-### Установка
+### Installation
 
 **Linux:**
 ```bash
@@ -630,7 +679,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Базовое использование
+### Basic Usage
 
 ```python
 import sys
@@ -638,26 +687,26 @@ sys.path.insert(0, '/path/to/compressive-sensing')
 
 from framework import omp, cosamp, sp, brgp, dct
 
-# 1. Создать базисную матрицу DCT нужного размера
-#    (N = высота/ширина изображения)
+# 1. Build a DCT basis matrix matching the image size
+#    (N = image height / width)
 N = 256
 Psi = dct(N)
 
-# 2. Выбрать параметры алгоритма
-M = 128   # Число измерений (M < N, рекомендуется M ~ N/2)
-K = 20    # Итерации / sparsity
+# 2. Choose algorithm parameters
+M = 128   # Number of measurements (M < N; M ≈ N/2 recommended)
+K = 20    # Iterations / sparsity level
 
-# 3. Запустить алгоритм
+# 3. Run the algorithm
 result = omp("misc/lena.png", Psi, M, K)
 
-# 4. Получить результаты
+# 4. Retrieve results
 import cv2
 cv2.imwrite("output.png", result.get_Image())
 print(f"CR:   {result.get_CR():.3f}")
 print(f"PSNR: {result.get_PSNR():.2f} dB")
 ```
 
-### Пример: обработка нескольких алгоритмов
+### Example: Multiple Algorithms
 
 ```python
 from framework import omp, cosamp, sp, brgp, dct
@@ -673,7 +722,7 @@ algorithms = {
     "OMP":    lambda: omp(image_path, Psi, M, K),
     "SP":     lambda: sp(image_path, Psi, M, K),
     "BRGP":   lambda: brgp(image_path, Psi, M, K),
-    "CoSaMP": lambda: cosamp(image_path, Psi, K, M),  # s=K для CoSaMP
+    "CoSaMP": lambda: cosamp(image_path, Psi, K, M),  # s=K for CoSaMP
 }
 
 for name, alg_fn in algorithms.items():
@@ -682,7 +731,7 @@ for name, alg_fn in algorithms.items():
     print(f"{name}: CR={result.get_CR():.3f}, PSNR={result.get_PSNR():.2f} dB")
 ```
 
-### Пример: предобработка шумом и фильтрацией
+### Example: Noise and Filtering Pre-processing
 
 ```python
 import cv2
@@ -691,28 +740,28 @@ from framework.noise import GaussianNoise
 from framework.smooth import Median_filter
 from framework import omp, dct
 
-# Добавить шум
+# Add noise
 noisy = GaussianNoise("misc/lena.png", stdev=5, show=False)
 cv2.imwrite("/tmp/noisy.png", noisy)
 
-# Применить фильтр
+# Apply filter
 filtered = Median_filter("/tmp/noisy.png", k=3, show=False)
 cv2.imwrite("/tmp/filtered.png", filtered)
 
-# Применить CS к отфильтрованному изображению
+# Apply CS to the filtered image
 result = omp("/tmp/filtered.png", dct(256), M=128, K=20)
-print(f"PSNR после шума+фильтрации+CS: {result.get_PSNR():.2f} dB")
+print(f"PSNR after noise + filter + CS: {result.get_PSNR():.2f} dB")
 ```
 
-### Пример: использование метрик напрямую
+### Example: Using Metrics Directly
 
 ```python
 import cv2
 import numpy as np
 import framework.metrics as metrics
 
-original = cv2.imread("misc/lena.png", cv2.IMREAD_GRAYSCALE)
-compressed = cv2.imread("output.png", cv2.IMREAD_GRAYSCALE)
+original   = cv2.imread("misc/lena.png", cv2.IMREAD_GRAYSCALE)
+compressed = cv2.imread("output.png",    cv2.IMREAD_GRAYSCALE)
 
 psnr_val = metrics.PSNR(original, compressed)
 ssim_val = metrics.SSIM(original, compressed)
@@ -723,7 +772,7 @@ print(f"SSIM: {ssim_val:.4f}")
 print(f"CR:   {cr_val:.3f}")
 ```
 
-### Пример: сохранение результатов в БД (из директории test/)
+### Example: Saving Results to the Database (run from `test/`)
 
 ```python
 import sys
@@ -748,22 +797,24 @@ results = db.get_all_results()
 
 ---
 
-## Масштабирование
+## Scaling
 
-### Текущие ограничения
+### Current Limitations
 
-| Ограничение | Описание |
-|-------------|----------|
-| Изображения предполагаются квадратными | Все алгоритмы устанавливают `N = H` (высота изображения). Прямоугольные изображения (`H ≠ W`) обрабатываются корректно, если передать `dct(H)`: матрица Φ формируется по высоте, а цикл `for i in range(W)` проходит по всем столбцам. Необходимо явно передавать `dct(H)`, а не `dct(W)`. |
-| Только оттенки серого | Все алгоритмы работают с `IMREAD_GRAYSCALE` |
-| Колоночная обработка | Каждая колонка обрабатывается последовательно (цикл `for i in range(W)`) |
-| Нет GPU-ускорения | Все вычисления выполняются на CPU через NumPy |
+| Limitation | Description |
+|------------|-------------|
+| Images assumed square | All algorithms set `N = H` (image height); pass `dct(H)` for rectangular images. |
+| Grayscale only | All algorithms load images with `IMREAD_GRAYSCALE`. |
+| Sequential column processing | Each column is processed in a `for i in range(W)` loop. |
+| No GPU acceleration | All computation runs on CPU via NumPy. |
 
-### Горизонтальное масштабирование
+> **Rectangular images:** Φ is built over the height dimension (`N = H`) and the loop `for i in range(W)` covers all columns regardless of width, so rectangular images work correctly. Always pass `dct(H)` rather than `dct(W)`.
 
-#### 1. Параллелизация на уровне колонок
+### Horizontal Scaling
 
-Текущий подход обрабатывает колонки последовательно. Его можно легко распараллелить:
+#### 1. Column-level Parallelism
+
+The current sequential column loop can easily be parallelised:
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
@@ -774,7 +825,6 @@ def process_column(i, y_col, Theta, K):
     col_rec, _ = cs_omp(y, Theta, K)
     return i, np.reshape(col_rec, (-1,))
 
-# Параллельная обработка колонок
 with ThreadPoolExecutor(max_workers=8) as executor:
     futures = [
         executor.submit(process_column, i, img_cs_1d[:, i], Theta_1d, K)
@@ -785,9 +835,9 @@ with ThreadPoolExecutor(max_workers=8) as executor:
         sparse_rec_1d[:, i] = col
 ```
 
-#### 2. Параллелизация на уровне изображений
+#### 2. Image-level Parallelism
 
-Для батчевой обработки нескольких изображений используйте `threading` (как в `all_algs_test.py`) или `multiprocessing`:
+For batch processing of multiple images use `threading` (as in `all_algs_test.py`) or `multiprocessing`:
 
 ```python
 from multiprocessing import Pool
@@ -804,30 +854,30 @@ with Pool(processes=4) as pool:
     results = pool.map(process_image, params)
 ```
 
-#### 3. GPU-ускорение через CuPy
+#### 3. GPU Acceleration via CuPy
 
-NumPy-операции можно перенести на GPU с минимальными изменениями:
+NumPy operations can be offloaded to a GPU with minimal code changes:
 
 ```python
 import cupy as cp   # pip install cupy-cuda12x
 import numpy as np
 
-# Заменить np.dot → cp.dot, np.linalg → cp.linalg
-Phi_gpu = cp.array(Phi)
+# Replace np.dot → cp.dot, np.linalg → cp.linalg
+Phi_gpu    = cp.array(Phi)
 matrix_gpu = cp.array(matrix)
-img_gpu = cp.array(im)
+img_gpu    = cp.array(im)
 
 img_cs_1d = cp.dot(Phi_gpu, img_gpu)
-Theta_1d = cp.dot(Phi_gpu, matrix_gpu)
-# ... далее алгоритм на GPU
+Theta_1d  = cp.dot(Phi_gpu, matrix_gpu)
+# ... rest of the algorithm on GPU ...
 result_np = cp.asnumpy(sparse_rec_1d)
 ```
 
-### Вертикальное масштабирование
+### Vertical Scaling
 
-#### 1. Поддержка цветных изображений
+#### 1. Colour Image Support
 
-Расширение на цветные изображения (RGB) путём обработки каждого канала независимо:
+Extend to colour (RGB) images by processing each channel independently:
 
 ```python
 def omp_color(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray:
@@ -835,38 +885,38 @@ def omp_color(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray
     channels = cv2.split(image)
     rec_channels = []
     for ch in channels:
-        # Сохранить канал во временный файл или передать как ndarray
+        # Save the channel to a temp file, or pass as ndarray directly
         result = _omp_channel(ch, matrix, M, K)
         rec_channels.append(result)
     return cv2.merge(rec_channels)
 ```
 
-#### 2. Поддержка прямоугольных изображений
+#### 2. Rectangular Image Support
 
-Для прямоугольных изображений `(H, W)` при `H ≠ W` требуется применение DCT отдельно для строк и столбцов (2D DCT) или обработка с двумя разными матрицами:
+For images where `H ≠ W`, apply 2D DCT separately along rows and columns, or pass two different matrices:
 
 ```python
-# Вариант: применить алгоритм к транспонированной матрице
-# для обработки строк, затем колонок
+# Option: run the algorithm on the transposed matrix
+# to process rows, then columns.
 ```
 
-#### 3. Адаптивная матрица измерений
+#### 3. Deterministic Measurement Matrix
 
-Вместо случайной гауссовой матрицы Φ можно использовать детерминированные матрицы (Hadamard, Toeplitz) для воспроизводимости:
+Replace the random Gaussian Φ with a deterministic matrix (Hadamard, Toeplitz) for reproducibility:
 
 ```python
 from scipy.linalg import hadamard
 
-N = 256
-H = hadamard(N)
-Phi = H[:M, :] / np.sqrt(M)  # Первые M строк матрицы Hadamard
+N   = 256
+H   = hadamard(N)
+Phi = H[:M, :] / np.sqrt(M)  # First M rows of the Hadamard matrix
 ```
 
-### Добавление нового алгоритма
+### Adding a New Algorithm
 
-Фреймворк спроектирован для простого расширения. Для добавления нового алгоритма:
+The framework is designed for easy extension. To add a new algorithm:
 
-**1. Создайте файл** `framework/my_algorithm.py`:
+**Step 1.** Create `framework/my_algorithm.py`:
 
 ```python
 import numpy as np
@@ -877,11 +927,11 @@ from typing import Tuple
 
 def my_algorithm(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
     """
-    Описание алгоритма.
-        image_path - путь к изображению.
-        matrix     - базисная матрица NxN.
-        M          - размер матрицы измерений.
-        K          - число итераций.
+    Algorithm description.
+        image_path - path to the image.
+        matrix     - NxN basis matrix.
+        M          - number of measurements.
+        K          - number of iterations.
     """
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     H, W = image.shape
@@ -907,67 +957,65 @@ def my_algorithm(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS
 
 
 def _cs_my_algorithm(y: np.ndarray, Phi: np.ndarray, K: int) -> np.ndarray:
-    """Реализация алгоритма для одного столбца."""
-    # ... ваша реализация ...
+    """Core algorithm for a single column."""
+    # ... your implementation ...
     pass
 ```
 
-**2. Зарегистрируйте** в `framework/__init__.py`:
+**Step 2.** Register it in `framework/__init__.py`:
 
 ```python
 from .my_algorithm import my_algorithm
 ```
 
-**3. Добавьте тестовый скрипт** `test/my_algorithm_test.py` по образцу существующих тестов.
+**Step 3.** Add a test script `test/my_algorithm_test.py` following the pattern of the existing test files.
 
 ---
 
-### Рекомендации по выбору параметров
+### Parameter Selection Guide
 
-```mermaid
-flowchart TD
-    A[Выбор параметров] --> B{Размер изображения N}
-    B --> |N ≤ 256| C["M = N/2 = 128\nK = 10–30"]
-    B --> |256 < N ≤ 512| D["M = N/2 = 256\nK = 20–50"]
-    B --> |N > 512| E["M = N/3..N/2\nK = 30–100"]
+Use the following table to choose starting values for `M` and `K` based on image size and the speed/quality trade-off:
 
-    C & D & E --> F{Приоритет}
-    F --> |Скорость| G["K малое (10–20)\nM малое (< N/2)"]
-    F --> |Качество| H["K большое (50–200)\nM близко к N"]
-    F --> |Баланс| I["M = N/2\nK = 20–50"]
-```
+| Image size N | Recommended M | Recommended K | Priority |
+|--------------|---------------|---------------|----------|
+| N ≤ 256 | 128 (N/2) | 10–30 | — |
+| 256 < N ≤ 512 | 256 (N/2) | 20–50 | — |
+| N > 512 | N/3 – N/2 | 30–100 | — |
+| Any | < N/2 | 10–20 | Speed |
+| Any | ≈ N | 50–200 | Quality |
+| Any | N/2 | 20–50 | Balanced |
 
-| Параметр | Рекомендуемый диапазон | Влияние |
-|----------|----------------------|---------|
-| `M` | `N/4` – `N` | ↑M → ↑PSNR, ↑время |
-| `K` (OMP/SP/BRGP) | `10` – `200` | ↑K → ↑PSNR (до насыщения), ↑время |
-| `s` (CoSaMP) | `5` – `50` | Разреженность сигнала |
-| `u` (BRGP) | `0.6` – `0.9` | Агрессивность расширения |
+| Parameter | Recommended range | Effect |
+|-----------|-------------------|--------|
+| `M` | `N/4` – `N` | ↑M → ↑PSNR, ↑time |
+| `K` (OMP/SP/BRGP) | `10` – `200` | ↑K → ↑PSNR (up to saturation), ↑time |
+| `s` (CoSaMP) | `5` – `50` | Signal sparsity |
+| `u` (BRGP) | `0.6` – `0.9` | Expansion aggressiveness |
 
 ---
 
 ## API Reference
 
-### `framework` (публичный API)
+### `framework` (public API)
 
 ```python
 from framework import omp, cosamp, sp, brgp, dct, ImageCS
 ```
 
 #### `omp(image_path, matrix, M, K) → ImageCS`
-Восстановление изображения методом Orthogonal Matching Pursuit.
+Image reconstruction using Orthogonal Matching Pursuit.
 
 #### `cosamp(image_path, matrix, s, M) → ImageCS`
-Восстановление изображения методом Compressive Sampling Matching Pursuit.
+Image reconstruction using Compressive Sampling Matching Pursuit.
 
 #### `sp(image_path, matrix, M, K) → ImageCS`
-Восстановление изображения методом Subspace Pursuit.
+Image reconstruction using Subspace Pursuit.
 
 #### `brgp(image_path, matrix, M, K) → ImageCS`
-Восстановление изображения методом Backtracking Refined Greedy Pursuit.
+Image reconstruction using Backtracking Refined Greedy Pursuit.
 
 #### `dct(N) → np.ndarray`
-Создание ортонормированной DCT-матрицы размером NxN.
+Generate an orthonormal DCT matrix of size NxN.
 
 ---
 
@@ -1012,7 +1060,7 @@ from framework.smooth import Mean_filter, Median_filter, Gaussian_filter, Bilate
 ### `test/db`
 
 ```python
-import db  # из директории test/
+import db  # from the test/ directory
 ```
 
 #### `db.create_table() → None`
@@ -1025,12 +1073,12 @@ import db  # из директории test/
 
 ---
 
-## Авторы
+## Authors
 
-| Автор | GitHub | Компоненты |
-|-------|--------|------------|
-| Герда Владислав | [@hitfot](https://github.com/hitfot) | OMP, CoSaMP, DCT, Metrics, Noise |
-| Демченко Григорий | [@Pumukun](https://github.com/Pumukun) | SP, BRGP, ImageCS |
-| Кочерыгина Анастасия | [@somniiium](https://github.com/somniiium) | — |
-| Сабитова Алина | [@AlinaSAB](https://github.com/AlinaSAB) | — |
-| Шибанов Михаил | [@Kar1ch](https://github.com/Kar1ch) | Database (db.py) |
+| Author | GitHub | Components |
+|--------|--------|------------|
+| Vladislav Gerda | [@hitfot](https://github.com/hitfot) | OMP, CoSaMP, DCT, Metrics, Noise |
+| Grigory Demchenko | [@Pumukun](https://github.com/Pumukun) | SP, BRGP, ImageCS |
+| Anastasia Kocherygina | [@somniiium](https://github.com/somniiium) | — |
+| Alina Sabitova | [@AlinaSAB](https://github.com/AlinaSAB) | — |
+| Mikhail Shibanov | [@Kar1ch](https://github.com/Kar1ch) | Database (db.py) |
