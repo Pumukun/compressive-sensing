@@ -1,0 +1,1327 @@
+\documentclass[12pt,a4paper]{article}
+
+% ─── Encoding & fonts ────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ─── Page layout ─────────────────────────────────────────────────────────────
+\usepackage[margin=2.5cm,top=3cm,bottom=3cm]{geometry}
+
+% ─── Mathematics ─────────────────────────────────────────────────────────────
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% ─── Code listings ───────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+% ─── Verbatim with LaTeX escapes (used for pseudocode) ───────────────────────
+\usepackage{alltt}
+
+% ─── Tables ──────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ─── Miscellaneous ───────────────────────────────────────────────────────────
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage[hidelinks,colorlinks=true,linkcolor=blue,urlcolor=blue,
+            citecolor=blue]{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+
+% ─── Colour palette ──────────────────────────────────────────────────────────
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{codeframe}{rgb}{0.80,0.80,0.80}
+\definecolor{codegreen}{rgb}{0.00,0.50,0.00}
+\definecolor{codeblue}{rgb}{0.00,0.00,0.80}
+\definecolor{codepurple}{rgb}{0.50,0.00,0.50}
+\definecolor{codegray}{rgb}{0.50,0.50,0.50}
+
+% ─── Listing base style ──────────────────────────────────────────────────────
+\lstdefinestyle{generic}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=flexible,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    frame=single,
+    rulecolor=\color{codeframe},
+    tabsize=4,
+}
+
+\lstdefinestyle{python}{
+    style=generic,
+    language=Python,
+    commentstyle=\color{codegreen},
+    keywordstyle=\bfseries\color{codeblue},
+    stringstyle=\color{codepurple},
+    morekeywords={True,False,None,with,as,lambda,yield},
+}
+
+\lstdefinestyle{sql}{
+    style=generic,
+    language=SQL,
+    commentstyle=\color{codegreen},
+    keywordstyle=\bfseries\color{codeblue},
+}
+
+\lstdefinestyle{bash}{
+    style=generic,
+    language=bash,
+    commentstyle=\color{codegreen},
+    keywordstyle=\bfseries\color{codeblue},
+}
+
+\lstdefinestyle{mermaid}{
+    style=generic,
+    commentstyle=\color{codegray},
+}
+
+\lstset{style=generic}
+
+% ─── Convenience macros ──────────────────────────────────────────────────────
+\newcommand{\cs}[1]{\texttt{#1}}          % inline code / monospace
+\newcommand{\lrarrow}{$\leftarrow$}        % assignment arrow in prose
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  DOCUMENT
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Title page ───────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\huge\bfseries Compressive Sensing Framework\par}
+  \vspace{0.8cm}
+  {\Large Documentation\par}
+  \vspace{2.5cm}
+  \begin{tabular}{ll}
+    \textbf{Vladislav Gerda}       & \url{https://github.com/hitfot}    \\
+    \textbf{Grigory Demchenko}     & \url{https://github.com/Pumukun}   \\
+    \textbf{Anastasia Kocherygina} & \url{https://github.com/somniiium} \\
+    \textbf{Alina Sabitova}        & \url{https://github.com/AlinaSAB}  \\
+    \textbf{Mikhail Shibanov}      & \url{https://github.com/Kar1ch}    \\
+  \end{tabular}
+  \vfill
+  {\normalsize\itshape Compressive Sensing Framework --- Version 1.0\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Project Overview}
+% =============================================================================
+
+\textbf{Compressive Sensing Framework} is a Python framework for compression
+and reconstruction of 2D images using Compressive Sensing (CS) methods.  The
+framework implements several sparse signal recovery algorithms along with
+quality assessment tools, noise generation utilities, and image smoothing
+filters.
+
+\subsection{Key Features}
+
+\begin{itemize}
+  \item CS algorithm implementations: \textbf{OMP}, \textbf{CoSaMP},
+        \textbf{SP}, \textbf{BRGP}
+  \item Discrete Cosine Transform (DCT) as the sparsifying basis matrix
+  \item Quality metrics: \textbf{CR} (Compression Ratio), \textbf{PSNR},
+        \textbf{SSIM}
+  \item Noise generation: Gaussian, Poisson, Salt-and-Pepper, Speckle
+  \item Smoothing filters: Mean, Median, Gaussian, Bilateral
+  \item Test result persistence in an SQLite database
+  \item Result visualisation via Matplotlib
+\end{itemize}
+
+% =============================================================================
+\section{Theoretical Background}
+% =============================================================================
+
+Compressive Sensing allows a sparse signal to be recovered from far fewer
+measurements than the Nyquist--Shannon sampling theorem would require.
+
+\subsection{Mathematical Model}
+
+Let $x \in \mathbb{R}^N$ be a sparse signal (an image represented in basis
+$\Psi$).  The measurement vector is:
+
+\begin{equation}
+  y = \Phi \cdot \Psi \cdot s = \Theta \cdot s
+\end{equation}
+
+where:
+\begin{itemize}
+  \item $\Phi \in \mathbb{R}^{M \times N}$ --- measurement matrix
+        (M is much smaller than N)
+  \item $\Psi \in \mathbb{R}^{N \times N}$ --- sparsifying basis matrix (DCT)
+  \item $s \in \mathbb{R}^N$ --- sparse coefficient vector
+  \item $\Theta = \Phi \cdot \Psi$ --- sensing matrix
+\end{itemize}
+
+Recovery problem: find $s$ such that $\|s\|_0$ is minimised subject to
+$\Theta s \approx y$.
+
+\subsection{Processing Pipeline}
+
+\begin{lstlisting}
++------------------------------------------------------------------+
+|                  Compressive Sensing Pipeline                     |
+|                                                                    |
+|  Image -> Matrix Phi -> y=Phi*x -> CS Algorithm -> xhat -> Psi*xhat |
+|  (NxN)      (MxN)        (MxN)      recovery         (NxN)          |
++------------------------------------------------------------------+
+\end{lstlisting}
+
+% =============================================================================
+\section{Framework Architecture}
+% =============================================================================
+
+\subsection{Module Structure}
+
+\begin{lstlisting}
+compressive-sensing/
++-- framework/                  # Main framework package
+|   +-- __init__.py             # Public API exports
+|   +-- omp.py                  # OMP algorithm
+|   +-- cosamp.py               # CoSaMP algorithm
+|   +-- sp.py                   # SP (Subspace Pursuit) algorithm
+|   +-- brgp.py                 # BRGP algorithm
+|   +-- transform.py            # DCT transform
+|   +-- metrics.py              # Quality metrics (CR, PSNR, SSIM)
+|   +-- noise.py                # Noise generation functions
+|   +-- smooth.py               # Smoothing filters
+|   \-- utils.py                # ImageCS helper class
++-- test/                       # Test scripts
+|   +-- omp_test.py             # OMP test
+|   +-- cosamp_test.py          # CoSaMP test
+|   +-- sp_test.py              # SP test
+|   +-- brgp_test.py            # BRGP test
+|   +-- all_algs_test.py        # Combined test of all algorithms
+|   +-- plot_test.py            # Result visualisation
+|   +-- db/                     # Database module
+|   |   +-- __init__.py
+|   |   +-- db.py               # SQLite CRUD operations
+|   |   \-- create_db.sql       # SQL schema
+|   \-- plot/                   # Plotting module
+|       +-- __init__.py
+|       \-- plot.py             # Chart generation
++-- misc/                       # Sample test images
++-- requirements.txt            # Python dependencies
++-- setup.sh                    # Linux setup script
+\-- README.md                   # Brief project description
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Module Dependency Diagram}
+
+The diagram below is written in Mermaid syntax; render it with any
+Mermaid-compatible viewer (e.g.\ \url{https://mermaid.live}).
+
+\begin{lstlisting}[style=mermaid,caption={Module dependency graph (Mermaid source)}]
+graph TD
+    subgraph framework["framework"]
+        INIT["__init__.py (public API)"]
+        OMP["omp.py"]
+        COSAMP["cosamp.py"]
+        SP["sp.py"]
+        BRGP["brgp.py"]
+        DCT["transform.py (DCT)"]
+        METRICS["metrics.py (CR / PSNR / SSIM)"]
+        NOISE["noise.py"]
+        SMOOTH["smooth.py"]
+        UTILS["utils.py (ImageCS)"]
+    end
+
+    subgraph test["test"]
+        OMP_T["omp_test.py"]
+        COSAMP_T["cosamp_test.py"]
+        SP_T["sp_test.py"]
+        BRGP_T["brgp_test.py"]
+        ALL_T["all_algs_test.py"]
+        PLOT_T["plot_test.py"]
+        DB["db/db.py (SQLite)"]
+        PLOT["plot/plot.py"]
+    end
+
+    INIT --> OMP
+    INIT --> COSAMP
+    INIT --> SP
+    INIT --> BRGP
+    INIT --> DCT
+    INIT --> UTILS
+
+    OMP --> METRICS
+    OMP --> UTILS
+    COSAMP --> METRICS
+    COSAMP --> UTILS
+    SP --> METRICS
+    SP --> UTILS
+    BRGP --> METRICS
+    BRGP --> UTILS
+    BRGP --> OMP
+    BRGP --> SP
+
+    OMP_T --> INIT
+    OMP_T --> DB
+    COSAMP_T --> INIT
+    COSAMP_T --> DB
+    SP_T --> INIT
+    SP_T --> DB
+    BRGP_T --> INIT
+    BRGP_T --> DB
+    ALL_T --> INIT
+    ALL_T --> DB
+    PLOT_T --> PLOT
+    PLOT --> DB
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Class Diagram}
+
+\begin{lstlisting}[style=mermaid,caption={UML class diagram (Mermaid source)}]
+classDiagram
+    class ImageCS {
+        -np.ndarray __matrix
+        -float __cr
+        -float __psnr
+        -float __ssim
+        +__init__(matrix, cr, psnr, ssim)
+        +get_Image() np.ndarray
+        +get_CR() float
+        +get_PSNR() float
+        +get_SSIM() float
+        +set_Image(image) None
+        +set_CR(cr) None
+        +set_PSNR(psnr) None
+        +set_SSIM(ssim) None
+    }
+
+    class OMP {
+        +omp(image_path, matrix, M, K) ImageCS
+        +cs_omp(y, Phi, K) Tuple
+    }
+
+    class CoSaMP {
+        +cosamp(image_path, matrix, s, M) ImageCS
+        +cs_cosamp(y, s, Phi, epsilon, K) np.ndarray
+    }
+
+    class SP {
+        +sp(image_path, matrix, M, K) ImageCS
+        +cs_sp(y, Phi, K) Tuple
+    }
+
+    class BRGP {
+        +brgp(image_path, matrix, M, K) ImageCS
+        +cs_brgp(y, Phi, K, Candidate, u) np.ndarray
+    }
+
+    class Transform {
+        +dct(N) np.ndarray
+    }
+
+    class Metrics {
+        +PSNR(original, compressed) float
+        +SSIM(original, compressed) float
+        +CR(image_source, image_compressed) float
+    }
+
+    class Noise {
+        +GaussianNoise(image_path, stdev, show) np.ndarray
+        +PoissonNoise(image_path, show) np.ndarray
+        +SaltAndPepperNoise(image_path, show, number_of_pixels) np.ndarray
+        +SpeckleNoise(image_path, show, variance) np.ndarray
+    }
+
+    class Smooth {
+        +Mean_filter(image_path, k, show) np.ndarray
+        +Median_filter(image_path, k, show) np.ndarray
+        +Gaussian_filter(image_path, k, show) np.ndarray
+        +Bilateral_filter(image_path, k, show) np.ndarray
+    }
+
+    class Database {
+        +connect_db() Connection
+        +create_table() None
+        +add_result(...) None
+        +get_all_results() List
+        +get_result_by_id(id) Tuple
+        +get_result_by_alg(alg) List
+        +update_result(...) None
+        +delete_result(alg) None
+        +delete_all() None
+    }
+
+    OMP --> ImageCS : returns
+    CoSaMP --> ImageCS : returns
+    SP --> ImageCS : returns
+    BRGP --> ImageCS : returns
+    BRGP --> OMP : uses cs_omp
+    BRGP --> SP : uses cs_sp
+    OMP --> Metrics : computes CR/PSNR
+    CoSaMP --> Metrics : computes CR/PSNR/SSIM
+    SP --> Metrics : computes CR/PSNR
+    BRGP --> Metrics : computes CR/PSNR
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Data Flow}
+
+\begin{lstlisting}[style=mermaid,caption={End-to-end data flow (Mermaid source)}]
+flowchart LR
+    A["Input image / image_path"] --> B["Load as grayscale (cv2.imread)"]
+    B --> C["Image matrix: NxN numpy array"]
+    C --> D["Measurement matrix Phi ~ N(0,1/M) : MxN"]
+    C --> E["Basis matrix Psi = DCT : NxN"]
+    D & E --> F["Sensing matrix Theta = Phi*Psi : MxN"]
+    C & D --> G["Measurement vector y = Phi*im : MxW"]
+    G & F --> H{"CS Algorithm (column by column)"}
+    H --> |OMP|    I1["cs_omp(y, Theta, K)"]
+    H --> |CoSaMP| I2["cs_cosamp(y, s, Theta)"]
+    H --> |SP|     I3["cs_sp(y, Theta, K)"]
+    H --> |BRGP|   I4["cs_brgp(y, Theta, K, Candidate)"]
+    I1 & I2 & I3 & I4 --> J["Sparse matrix sparse_rec_1d: NxN"]
+    J --> K["Reconstructed image: img_rec = Psi * sparse_rec_1d"]
+    K --> L["Quality metrics: CR / PSNR / SSIM"]
+    K & L --> M["ImageCS: get_Image / get_CR / get_PSNR / get_SSIM"]
+\end{lstlisting}
+
+% =============================================================================
+\section{Framework Components}
+% =============================================================================
+
+\subsection{Recovery Algorithms}
+
+All algorithms work with 2D images using a \textbf{column-by-column} approach:
+each pixel column is recovered independently as a 1D CS problem.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsubsection{OMP --- Orthogonal Matching Pursuit}
+
+\textbf{File:} \cs{framework/omp.py}\quad\textbf{Author:} Vladislav Gerda
+
+\textbf{Description.}  OMP is a greedy algorithm that iteratively selects the
+column of the sensing matrix most correlated with the current residual, then
+projects the measured signal onto the selected subspace.
+
+\textbf{Pseudocode:}
+
+\begin{alltt}
+\textbf{function} cs\_omp(y, \(\Phi\), K):
+    residual \(\leftarrow\) y
+    index    \(\leftarrow\) array of \(-1\), length N        \textit{// support mask}
+
+    \textbf{for} j = 1 \textbf{to} K:
+        product    \(\leftarrow\) |\(\Phi^T \cdot\) residual|  \textit{// correlation with each column}
+        pos        \(\leftarrow\) argmax(product)      \textit{// most correlated column}
+        index[pos] \(\leftarrow\) 1                    \textit{// add to support}
+
+        a        \(\leftarrow\) pinv(\(\Phi\)[:, index\(\geq\)0]) \(\cdot\) y  \textit{// least-squares on support}
+        residual \(\leftarrow\) y \(-\) \(\Phi\)[:, index\(\geq\)0] \(\cdot\) a   \textit{// update residual}
+
+    result[index\(\geq\)0] \(\leftarrow\) a
+    \textbf{return} result
+\end{alltt}
+
+\textbf{Parameters:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Parameter & Type & Description \\
+  \midrule
+  \cs{image\_path} & \cs{str}          & Path to the input image \\
+  \cs{matrix}      & \cs{np.ndarray}   & Basis matrix $N \times N$ (DCT) \\
+  \cs{M}           & \cs{int}          & Number of measurements ($M < N$) \\
+  \cs{K}           & \cs{int}          & Number of iterations (= sparsity level) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Complexity:} $\mathcal{O}(K \cdot M \cdot N)$ per column.
+
+\bigskip\hrule\bigskip
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsubsection{CoSaMP --- Compressive Sampling Matching Pursuit}
+
+\textbf{File:} \cs{framework/cosamp.py}\quad\textbf{Author:} Vladislav Gerda
+
+\textbf{Description.}  CoSaMP extends OMP by selecting $2s$ best candidate
+indices at each step, merging them with the current support, solving a
+least-squares problem, and pruning back to the $s$ largest components.  The
+algorithm iterates until convergence.
+
+\textbf{Pseudocode:}
+
+\begin{alltt}
+\textbf{function} cs\_cosamp(y, s, \(\Phi\), \(\varepsilon\)=1e-10, K=1000):
+    residual \(\leftarrow\) y
+    result   \(\leftarrow\) zeros(N)
+
+    \textbf{for} j = 1 \textbf{to} K:
+        product   \(\leftarrow\) |\(\Phi^T \cdot\) residual|
+        top\_k\_idx \(\leftarrow\) indices of 2s largest values in product
+        top\_k\_idx \(\leftarrow\) top\_k\_idx \(\cup\) nonzero(result)  \textit{// merge with current support}
+
+        x           \(\leftarrow\) zeros(N)
+        x[top\_k\_idx] \(\leftarrow\) lstsq(\(\Phi\)[:, top\_k\_idx], y)  \textit{// constrained least squares}
+        set all but the s largest-magnitude entries of x to 0
+
+        result       \(\leftarrow\) x
+        residual\_old \(\leftarrow\) residual
+        residual     \(\leftarrow\) y \(-\) \(\Phi \cdot\) result
+
+        \textbf{if} \(\|\)residual\(\|\) < \(\varepsilon\)  \textbf{or}  \(\|\)residual \(-\) residual\_old\(\|\) < \(\varepsilon\):
+            \textbf{break}
+
+    \textbf{return} |result|
+\end{alltt}
+
+\textbf{Parameters:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Parameter   & Type            & Description \\
+  \midrule
+  \cs{image\_path} & \cs{str}       & Path to the input image \\
+  \cs{matrix}      & \cs{np.ndarray}& Basis matrix $N \times N$ (DCT) \\
+  \cs{s}           & \cs{int}       & Signal sparsity level \\
+  \cs{M}           & \cs{int}       & Number of measurements \\
+  \cs{epsilon}     & \cs{float}     & Convergence tolerance (default \cs{1e-10}) \\
+  \cs{K}           & \cs{int}       & Maximum number of iterations (default \cs{1000}) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip\hrule\bigskip
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsubsection{SP --- Subspace Pursuit}
+
+\textbf{File:} \cs{framework/sp.py}\quad\textbf{Author:} Grigory Demchenko
+
+\textbf{Description.}  SP maintains a fixed support set of size $K$ at every
+iteration: it expands the set with $K$ new candidates, solves a constrained LS
+problem over the union, then retains only the $K$ largest-magnitude components.
+
+\textbf{Pseudocode:}
+
+\begin{alltt}
+\textbf{function} cs\_sp(y, \(\Phi\), K):
+    residual \(\leftarrow\) y
+    index    \(\leftarrow\) \(\emptyset\)                       \textit{// current support set}
+    x        \(\leftarrow\) zeros(N)
+
+    \textbf{for} j = 1 \textbf{to} K:
+        product   \(\leftarrow\) |\(\Phi^T \cdot\) residual|
+        top\_k\_idx \(\leftarrow\) indices of K largest values in product
+        index     \(\leftarrow\) index \(\cup\) top\_k\_idx      \textit{// expand support}
+
+        x\_temp    \(\leftarrow\) pinv(\(\Phi\)[:, index]) \(\cdot\) y  \textit{// least squares on support}
+        x[index]  \(\leftarrow\) x\_temp
+
+        index    \(\leftarrow\) indices of K largest values in |x|  \textit{// prune to K}
+        residual \(\leftarrow\) y \(-\) \(\Phi \cdot\) x
+
+    \textbf{return} x, index
+\end{alltt}
+
+\textbf{Parameters:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Parameter        & Type             & Description \\
+  \midrule
+  \cs{image\_path} & \cs{str}         & Path to the input image \\
+  \cs{matrix}      & \cs{np.ndarray}  & Basis matrix $N \times N$ (DCT) \\
+  \cs{M}           & \cs{int}         & Number of measurements \\
+  \cs{K}           & \cs{int}         & Number of iterations and support set size \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip\hrule\bigskip
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsubsection{BRGP --- Backtracking Refined Greedy Pursuit}
+
+\textbf{File:} \cs{framework/brgp.py}\quad\textbf{Author:} Grigory Demchenko
+
+\textbf{Description.}  BRGP is a hybrid algorithm.  It initialises the support
+as the intersection of the SP and OMP candidate sets, then iteratively refines
+the support with a backtracking mechanism (reverting to the last saved state
+when the residual worsens).  A final SP-style refinement phase shrinks the
+support from size $K$ down to 0.
+
+\textbf{Pseudocode:}
+
+\begin{alltt}
+\textbf{function} brgp(y, \(\Phi\), K, u=0.8):
+    \textit{// --- Initialisation ---}
+    \_, Candidate\_sp  \(\leftarrow\) cs\_sp(y, \(\Phi\), K)
+    \_, Candidate\_omp \(\leftarrow\) cs\_omp(y, \(\Phi\), K)
+    Candidate         \(\leftarrow\) Candidate\_sp \(\cap\) Candidate\_omp  \textit{// intersection as seed}
+
+    x      \(\leftarrow\) pinv(\(\Phi\)[:, Candidate]) \(\cdot\) y projected onto Candidate
+    r      \(\leftarrow\) y \(-\) \(\Phi \cdot\) x
+    r\_save \(\leftarrow\) r
+    C\_save \(\leftarrow\) Candidate
+
+    \textit{// --- Expansion phase ---}
+    F         \(\leftarrow\) \(\{\) i : |\(\Phi^T r\)|\_i > u \(\cdot\) max|\(\Phi^T r\)| \(\}\)
+    Candidate \(\leftarrow\) Candidate \(\cup\) F
+    x, r      \(\leftarrow\) recompute(\(\Phi\), Candidate, y)
+
+    \textbf{while} len(Candidate) < K:
+        \textbf{if} \(\|\)r \(-\) r\_save\(\|\) < \(\|\)y\(\|\):           \textit{// improvement: expand}
+            C\_save    \(\leftarrow\) Candidate
+            r\_save    \(\leftarrow\) r
+            F         \(\leftarrow\) \(\{\) i : |\(\Phi^T r\)|\_i > u \(\cdot\) max|\(\Phi^T r\)| \(\}\)
+            Candidate \(\leftarrow\) Candidate \(\cup\) F
+        \textbf{else}:                              \textit{// no improvement: backtrack}
+            Candidate \(\leftarrow\) C\_save
+            r         \(\leftarrow\) r\_save
+            C\_dif     \(\leftarrow\) complement candidates not yet in Candidate
+            F         \(\leftarrow\) argmax of pinv(\(\Phi\)[:, C\_dif]) \(\cdot\) y
+            Candidate \(\leftarrow\) Candidate \(\cup\) F
+        x, r \(\leftarrow\) recompute(\(\Phi\), Candidate, y)
+
+    \textit{// --- SP-style refinement phase ---}
+    T \(\leftarrow\) K
+    \textbf{while} T > 0:
+        top\_T     \(\leftarrow\) indices of T largest values in |\(\Phi^T r\)|
+        Candidate \(\leftarrow\) Candidate \(\cup\) top\_T
+        keep\_K    \(\leftarrow\) indices of K largest values in |pinv(\(\Phi\)[:, Candidate]) \(\cdot\) y|
+        Candidate \(\leftarrow\) Candidate[keep\_K]
+        x, r      \(\leftarrow\) recompute(\(\Phi\), Candidate, y)
+        T         \(\leftarrow\) floor(T \(\cdot\) u)
+
+    \textbf{return} x
+\end{alltt}
+
+\textbf{Parameters:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Parameter        & Type            & Description \\
+  \midrule
+  \cs{image\_path} & \cs{str}        & Path to the input image \\
+  \cs{matrix}      & \cs{np.ndarray} & Basis matrix $N \times N$ (DCT) \\
+  \cs{M}           & \cs{int}        & Number of measurements \\
+  \cs{K}           & \cs{int}        & Number of iterations \\
+  \cs{u}           & \cs{float}      & Backtracking coefficient ($0 < u < 1$, default 0.8) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip\hrule\bigskip
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Algorithm Comparison}
+
+\begin{center}
+\begin{tabular}{lllll}
+  \toprule
+  Property                & OMP      & CoSaMP            & SP       & BRGP     \\
+  \midrule
+  Type                    & Greedy   & Iterative         & Iterative & Hybrid   \\
+  Convergence guarantee   & No       & Yes               & Yes       & Partial  \\
+  Iteration count         & Fixed $K$& Until convergence & Fixed $K$ & Adaptive \\
+  Uses other algorithms   & No       & No                & No        & OMP + SP \\
+  Available metrics       & CR, PSNR & CR, PSNR, SSIM    & CR, PSNR  & CR, PSNR \\
+  Computational cost      & Medium   & High              & Medium    & High     \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Transforms}
+
+\subsubsection{DCT --- Discrete Cosine Transform}
+
+\textbf{File:} \cs{framework/transform.py}
+
+\begin{lstlisting}[style=python]
+def dct(N: int) -> np.ndarray
+\end{lstlisting}
+
+Generates an orthonormal DCT matrix of size $N \times N$.  Used as the
+sparsifying basis matrix $\Psi$ --- natural images typically have very few
+non-zero DCT coefficients.
+
+\textbf{Formula for column $k$:}
+
+\[
+  \psi_k[n] = \cos\!\left(n \cdot \frac{k\pi}{N}\right), \quad n = 0, \ldots, N-1
+\]
+\[
+  \psi_k = \frac{\psi_k - \overline{\psi_k}}{\|\psi_k\|}, \quad k > 0
+\]
+
+\textbf{Example:}
+
+\begin{lstlisting}[style=python]
+from framework import dct
+Psi = dct(256)  # 256x256 basis matrix
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Quality Metrics}
+
+\textbf{File:} \cs{framework/metrics.py}
+
+\subsubsection{CR --- Compression Ratio}
+
+\begin{lstlisting}[style=python]
+def CR(image_source: np.ndarray, image_compressed: np.ndarray) -> float
+\end{lstlisting}
+
+Ratio of the number of non-zero elements in the original image to the number
+of non-zero elements in its sparse representation.
+
+\[
+  \mathrm{CR} = \frac{\#\,\mathrm{nonzero}(x)}{\#\,\mathrm{nonzero}(\hat{x})}
+\]
+
+\begin{quote}
+  \textbf{Note:} CR $> 1$ means the sparse representation has fewer non-zero
+  elements, i.e.\ the signal is genuinely sparse.
+\end{quote}
+
+\subsubsection{PSNR --- Peak Signal-to-Noise Ratio}
+
+\begin{lstlisting}[style=python]
+def PSNR(original: np.ndarray, compressed: np.ndarray) -> float
+\end{lstlisting}
+
+Peak signal-to-noise ratio in dB.  Uses
+\cs{skimage.metrics.peak\_signal\_noise\_ratio}.  Higher values indicate better
+reconstruction quality; values $> 30\,\mathrm{dB}$ are generally considered
+acceptable.
+
+\subsubsection{SSIM --- Structural Similarity Index}
+
+\begin{lstlisting}[style=python]
+def SSIM(original: np.ndarray, compressed: np.ndarray) -> float
+\end{lstlisting}
+
+Structural Similarity Index (0--1).  Uses
+\cs{skimage.metrics.structural\_similarity}.  Values close to 1 indicate high
+structural fidelity to the original.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Noise Functions}
+
+\textbf{File:} \cs{framework/noise.py}
+
+\begin{center}
+\begin{tabular}{p{6cm}p{4cm}p{4.5cm}}
+  \toprule
+  Function & Description & Parameters \\
+  \midrule
+  \cs{GaussianNoise(image\_path, stdev, show)}
+    & Gaussian blur (\cs{cv2.GaussianBlur})
+    & \cs{stdev} --- kernel size (odd integer: 3, 5, 7, \ldots) \\[4pt]
+  \cs{PoissonNoise(image\_path, show)}
+    & Poisson noise
+    & --- \\[4pt]
+  \cs{SaltAndPepperNoise(image\_path, show, number\_of\_pixels)}
+    & Salt-and-pepper noise
+    & \cs{number\_of\_pixels} --- number of corrupted pixels \\[4pt]
+  \cs{SpeckleNoise(image\_path, show, variance)}
+    & Speckle (multiplicative) noise
+    & \cs{variance} --- noise variance \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+All functions accept \verb|show: bool = True| to display a side-by-side
+comparison of the original and noisy image via Matplotlib.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Smoothing Filters}
+
+\textbf{File:} \cs{framework/smooth.py}
+
+\begin{center}
+\begin{tabular}{p{5.5cm}p{4cm}p{4.5cm}}
+  \toprule
+  Function & Description & Parameters \\
+  \midrule
+  \cs{Mean\_filter(image\_path, k, show)}
+    & Averaging filter
+    & \cs{k} --- kernel size ($k \times k$) \\[4pt]
+  \cs{Median\_filter(image\_path, k, show)}
+    & Median filter
+    & \cs{k} --- kernel size \\[4pt]
+  \cs{Gaussian\_filter(image\_path, k, show)}
+    & Gaussian filter
+    & \cs{k} --- kernel size (must be odd) \\[4pt]
+  \cs{Bilateral\_filter(image\_path, k, show)}
+    & Bilateral filter
+    & \cs{k} --- pixel neighbourhood diameter \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{ImageCS Class}
+
+\textbf{File:} \cs{framework/utils.py}
+
+A container that holds the result of a CS algorithm: the reconstructed image
+together with quality metrics.
+
+\begin{lstlisting}[style=python]
+class ImageCS:
+    def __init__(self, matrix: np.ndarray, cr: float = 0.0,
+                 psnr: float = 0.0, ssim: float = 0.0)
+
+    def get_Image(self) -> np.ndarray   # Image data
+    def get_CR(self) -> float           # Compression ratio
+    def get_PSNR(self) -> float         # PSNR in dB
+    def get_SSIM(self) -> float         # SSIM (0-1)
+
+    def set_Image(self, image: np.ndarray) -> None
+    def set_CR(self, cr: float) -> None
+    def set_PSNR(self, psnr: float) -> None
+    def set_SSIM(self, ssim: float) -> None
+\end{lstlisting}
+
+% =============================================================================
+\section{Testing Infrastructure}
+% =============================================================================
+
+\subsection{Test Structure}
+
+Test scripts are located in the \cs{test/} directory and must be
+\textbf{run from within that directory}.
+
+\begin{lstlisting}
+test/
++-- omp_test.py       # OMP test: sweeps M and K, saves images and metrics
++-- cosamp_test.py    # CoSaMP test
++-- sp_test.py        # SP test
++-- brgp_test.py      # BRGP test
++-- all_algs_test.py  # Parallel test of all algorithms (threading)
++-- plot_test.py      # Plot results from DB
++-- db/               # SQLite module
+\-- plot/             # Plotting module
+\end{lstlisting}
+
+\subsection{Database (SQLite)}
+
+\textbf{File:} \cs{test/db/db.py}
+
+Schema of the \cs{results} table:
+
+\begin{lstlisting}[style=sql]
+CREATE TABLE IF NOT EXISTS results (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    original_image TEXT    NOT NULL,   -- source image name
+    pwd            TEXT    NOT NULL,   -- path to reconstructed image
+    algorithm      TEXT    NOT NULL,   -- algorithm name
+    PSNR           FLOAT,              -- PSNR metric
+    SSIM           FLOAT,              -- SSIM metric
+    CR             FLOAT,              -- compression ratio
+    K              INTEGER NOT NULL,   -- iteration count
+    M              INTEGER NOT NULL,   -- measurement matrix size
+    height         INTEGER NOT NULL,   -- image height
+    width          INTEGER NOT NULL    -- image width
+);
+\end{lstlisting}
+
+\subsection{Running Tests}
+
+\begin{lstlisting}[style=bash]
+cd test/
+
+# Test a single algorithm
+python omp_test.py
+
+# Test all algorithms in parallel
+python all_algs_test.py
+
+# Plot results from the database
+python plot_test.py
+\end{lstlisting}
+
+% =============================================================================
+\section{Integration Guide}
+% =============================================================================
+
+\subsection{Installation}
+
+\textbf{Linux:}
+\begin{lstlisting}[style=bash]
+git clone <repo_url>
+cd compressive-sensing
+./setup.sh
+\end{lstlisting}
+
+\textbf{Windows:}
+\begin{lstlisting}
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+\end{lstlisting}
+
+\subsection{Basic Usage}
+
+\begin{lstlisting}[style=python]
+import sys
+sys.path.insert(0, '/path/to/compressive-sensing')
+
+from framework import omp, cosamp, sp, brgp, dct
+
+# 1. Build a DCT basis matrix matching the image size
+#    (N = image height / width)
+N = 256
+Psi = dct(N)
+
+# 2. Choose algorithm parameters
+M = 128   # Number of measurements (M < N; M ~ N/2 recommended)
+K = 20    # Iterations / sparsity level
+
+# 3. Run the algorithm
+result = omp("misc/lena.png", Psi, M, K)
+
+# 4. Retrieve results
+import cv2
+cv2.imwrite("output.png", result.get_Image())
+print(f"CR:   {result.get_CR():.3f}")
+print(f"PSNR: {result.get_PSNR():.2f} dB")
+\end{lstlisting}
+
+\subsection{Example: Multiple Algorithms}
+
+\begin{lstlisting}[style=python]
+from framework import omp, cosamp, sp, brgp, dct
+import cv2
+
+image_path = "misc/lena.png"
+N = 256
+Psi = dct(N)
+M = 128
+K = 20
+
+algorithms = {
+    "OMP":    lambda: omp(image_path, Psi, M, K),
+    "SP":     lambda: sp(image_path, Psi, M, K),
+    "BRGP":   lambda: brgp(image_path, Psi, M, K),
+    "CoSaMP": lambda: cosamp(image_path, Psi, K, M),  # s=K for CoSaMP
+}
+
+for name, alg_fn in algorithms.items():
+    result = alg_fn()
+    cv2.imwrite(f"output_{name.lower()}.png", result.get_Image())
+    print(f"{name}: CR={result.get_CR():.3f}, PSNR={result.get_PSNR():.2f} dB")
+\end{lstlisting}
+
+\subsection{Example: Noise and Filtering Pre-processing}
+
+\begin{lstlisting}[style=python]
+import cv2
+import numpy as np
+from framework.noise import GaussianNoise
+from framework.smooth import Median_filter
+from framework import omp, dct
+
+# Add noise
+noisy = GaussianNoise("misc/lena.png", stdev=5, show=False)
+cv2.imwrite("/tmp/noisy.png", noisy)
+
+# Apply filter
+filtered = Median_filter("/tmp/noisy.png", k=3, show=False)
+cv2.imwrite("/tmp/filtered.png", filtered)
+
+# Apply CS to the filtered image
+result = omp("/tmp/filtered.png", dct(256), M=128, K=20)
+print(f"PSNR after noise + filter + CS: {result.get_PSNR():.2f} dB")
+\end{lstlisting}
+
+\subsection{Example: Using Metrics Directly}
+
+\begin{lstlisting}[style=python]
+import cv2
+import numpy as np
+import framework.metrics as metrics
+
+original   = cv2.imread("misc/lena.png", cv2.IMREAD_GRAYSCALE)
+compressed = cv2.imread("output.png",    cv2.IMREAD_GRAYSCALE)
+
+psnr_val = metrics.PSNR(original, compressed)
+ssim_val = metrics.SSIM(original, compressed)
+cr_val   = metrics.CR(original, compressed)
+
+print(f"PSNR: {psnr_val:.2f} dB")
+print(f"SSIM: {ssim_val:.4f}")
+print(f"CR:   {cr_val:.3f}")
+\end{lstlisting}
+
+\subsection{Example: Saving Results to the Database}
+
+Run from the \cs{test/} directory:
+
+\begin{lstlisting}[style=python]
+import sys
+sys.path.insert(0, '/path/to/compressive-sensing/test')
+import db
+
+db.create_table()
+db.add_result(
+    pwd="output_omp.png",
+    original_image="lena",
+    algorithm="OMP",
+    psnr=32.5,
+    ssim=0.91,
+    cr=1.75,
+    k=20,
+    m=128,
+    height=256,
+    width=256
+)
+results = db.get_all_results()
+\end{lstlisting}
+
+% =============================================================================
+\section{Scaling}
+% =============================================================================
+
+\subsection{Current Limitations}
+
+\begin{center}
+\begin{tabular}{p{5cm}p{9cm}}
+  \toprule
+  Limitation & Description \\
+  \midrule
+  Images assumed square
+    & All algorithms set $N = H$ (image height); pass \cs{dct(H)} for
+      rectangular images. \\[4pt]
+  Grayscale only
+    & All algorithms load images with \cs{IMREAD\_GRAYSCALE}. \\[4pt]
+  Sequential column processing
+    & Each column is processed in a \cs{for i in range(W)} loop. \\[4pt]
+  No GPU acceleration
+    & All computation runs on CPU via NumPy. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{quote}
+  \textbf{Rectangular images:} $\Phi$ is built over the height dimension
+  ($N = H$) and the loop \verb|for i in range(W)| covers all columns
+  regardless of width, so rectangular images work correctly.  Always pass
+  \cs{dct(H)} rather than \cs{dct(W)}.
+\end{quote}
+
+\subsection{Horizontal Scaling}
+
+\subsubsection{Column-level Parallelism}
+
+The current sequential column loop can easily be parallelised:
+
+\begin{lstlisting}[style=python]
+from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+
+def process_column(i, y_col, Theta, K):
+    y = np.reshape(y_col, (-1, 1))
+    col_rec, _ = cs_omp(y, Theta, K)
+    return i, np.reshape(col_rec, (-1,))
+
+with ThreadPoolExecutor(max_workers=8) as executor:
+    futures = [
+        executor.submit(process_column, i, img_cs_1d[:, i], Theta_1d, K)
+        for i in range(W)
+    ]
+    for future in futures:
+        i, col = future.result()
+        sparse_rec_1d[:, i] = col
+\end{lstlisting}
+
+\subsubsection{Image-level Parallelism}
+
+For batch processing of multiple images use \cs{threading} (as in
+\cs{all\_algs\_test.py}) or \cs{multiprocessing}:
+
+\begin{lstlisting}[style=python]
+from multiprocessing import Pool
+from framework import omp, dct
+
+def process_image(args):
+    image_path, M, K = args
+    return omp(image_path, dct(256), M, K)
+
+images = ["misc/lena.png", "misc/house.png", "misc/4.1.05.png"]
+params = [(img, 128, 20) for img in images]
+
+with Pool(processes=4) as pool:
+    results = pool.map(process_image, params)
+\end{lstlisting}
+
+\subsubsection{GPU Acceleration via CuPy}
+
+NumPy operations can be offloaded to a GPU with minimal code changes:
+
+\begin{lstlisting}[style=python]
+import cupy as cp   # pip install cupy-cuda12x
+import numpy as np
+
+# Replace np.dot -> cp.dot, np.linalg -> cp.linalg
+Phi_gpu    = cp.array(Phi)
+matrix_gpu = cp.array(matrix)
+img_gpu    = cp.array(im)
+
+img_cs_1d = cp.dot(Phi_gpu, img_gpu)
+Theta_1d  = cp.dot(Phi_gpu, matrix_gpu)
+# ... rest of the algorithm on GPU ...
+result_np = cp.asnumpy(sparse_rec_1d)
+\end{lstlisting}
+
+\subsection{Vertical Scaling}
+
+\subsubsection{Colour Image Support}
+
+Extend to colour (RGB) images by processing each channel independently:
+
+\begin{lstlisting}[style=python]
+def omp_color(image_path: str, matrix: np.ndarray, M: int, K: int) -> np.ndarray:
+    image = cv2.imread(image_path)  # BGR
+    channels = cv2.split(image)
+    rec_channels = []
+    for ch in channels:
+        # Save the channel to a temp file, or pass as ndarray directly
+        result = _omp_channel(ch, matrix, M, K)
+        rec_channels.append(result)
+    return cv2.merge(rec_channels)
+\end{lstlisting}
+
+\subsubsection{Rectangular Image Support}
+
+For images where $H \neq W$, apply 2D DCT separately along rows and columns,
+or pass two different matrices:
+
+\begin{lstlisting}[style=python]
+# Option: run the algorithm on the transposed matrix
+# to process rows, then columns.
+\end{lstlisting}
+
+\subsubsection{Deterministic Measurement Matrix}
+
+Replace the random Gaussian $\Phi$ with a deterministic matrix (Hadamard,
+Toeplitz) for reproducibility:
+
+\begin{lstlisting}[style=python]
+from scipy.linalg import hadamard
+
+N   = 256
+H   = hadamard(N)
+Phi = H[:M, :] / np.sqrt(M)  # First M rows of the Hadamard matrix
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Adding a New Algorithm}
+
+The framework is designed for easy extension.  To add a new algorithm:
+
+\textbf{Step 1.} Create \cs{framework/my\_algorithm.py}:
+
+\begin{lstlisting}[style=python]
+import numpy as np
+import cv2
+import framework.metrics as metrics
+from framework.utils import ImageCS
+from typing import Tuple
+
+def my_algorithm(image_path: str, matrix: np.ndarray, M: int, K: int) -> ImageCS:
+    """
+    Algorithm description.
+        image_path - path to the image.
+        matrix     - NxN basis matrix.
+        M          - number of measurements.
+        K          - number of iterations.
+    """
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    H, W = image.shape
+    N = H
+
+    im = np.array(image)
+    Phi = np.random.randn(M, N) / np.sqrt(M)
+    img_cs_1d = np.dot(Phi, im)
+    Theta_1d = np.dot(Phi, matrix)
+    sparse_rec_1d = np.zeros((N, W))
+
+    for i in range(W):
+        y = np.reshape(img_cs_1d[:, i], (M, 1))
+        column_rec = _cs_my_algorithm(y, Theta_1d, K)
+        sparse_rec_1d[:, i] = np.reshape(column_rec, (N,))
+
+    img_rec = np.dot(matrix, sparse_rec_1d)
+
+    CR   = metrics.CR(image, sparse_rec_1d)
+    PSNR = metrics.PSNR(image, img_rec)
+
+    return ImageCS(img_rec, cr=CR, psnr=PSNR)
+
+
+def _cs_my_algorithm(y: np.ndarray, Phi: np.ndarray, K: int) -> np.ndarray:
+    """Core algorithm for a single column."""
+    # ... your implementation ...
+    pass
+\end{lstlisting}
+
+\textbf{Step 2.} Register it in \cs{framework/\_\_init\_\_.py}:
+
+\begin{lstlisting}[style=python]
+from .my_algorithm import my_algorithm
+\end{lstlisting}
+
+\textbf{Step 3.} Add a test script \cs{test/my\_algorithm\_test.py} following
+the pattern of the existing test files.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Parameter Selection Guide}
+
+Use the following tables to choose starting values for $M$ and $K$ based on
+image size and the speed/quality trade-off.
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  Image size $N$ & Recommended $M$ & Recommended $K$ & Priority \\
+  \midrule
+  $N \leq 256$          & 128 ($N/2$)   & 10--30  & ---      \\
+  $256 < N \leq 512$    & 256 ($N/2$)   & 20--50  & ---      \\
+  $N > 512$             & $N/3$--$N/2$  & 30--100 & ---      \\
+  Any                   & $< N/2$       & 10--20  & Speed    \\
+  Any                   & $\approx N$   & 50--200 & Quality  \\
+  Any                   & $N/2$         & 20--50  & Balanced \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Parameter & Recommended range & Effect \\
+  \midrule
+  \cs{M} & $N/4$--$N$ & $\uparrow M \Rightarrow \uparrow\mathrm{PSNR},\;\uparrow\mathrm{time}$ \\
+  \cs{K} (OMP/SP/BRGP) & 10--200 & $\uparrow K \Rightarrow \uparrow\mathrm{PSNR}$ (up to saturation), $\uparrow\mathrm{time}$ \\
+  \cs{s} (CoSaMP) & 5--50 & Signal sparsity \\
+  \cs{u} (BRGP) & 0.6--0.9 & Expansion aggressiveness \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{API Reference}
+% =============================================================================
+
+\subsection{\texttt{framework} (public API)}
+
+\begin{lstlisting}[style=python]
+from framework import omp, cosamp, sp, brgp, dct, ImageCS
+\end{lstlisting}
+
+\begin{description}[style=nextline]
+  \item[\cs{omp(image\_path, matrix, M, K) $\to$ ImageCS}]
+    Image reconstruction using Orthogonal Matching Pursuit.
+  \item[\cs{cosamp(image\_path, matrix, s, M) $\to$ ImageCS}]
+    Image reconstruction using Compressive Sampling Matching Pursuit.
+  \item[\cs{sp(image\_path, matrix, M, K) $\to$ ImageCS}]
+    Image reconstruction using Subspace Pursuit.
+  \item[\cs{brgp(image\_path, matrix, M, K) $\to$ ImageCS}]
+    Image reconstruction using Backtracking Refined Greedy Pursuit.
+  \item[\cs{dct(N) $\to$ np.ndarray}]
+    Generate an orthonormal DCT matrix of size $N \times N$.
+\end{description}
+
+\subsection{\texttt{framework.metrics}}
+
+\begin{lstlisting}[style=python]
+import framework.metrics as metrics
+\end{lstlisting}
+
+\begin{description}
+  \item[\cs{metrics.PSNR(original, compressed) $\to$ float}] ~
+  \item[\cs{metrics.SSIM(original, compressed) $\to$ float}] ~
+  \item[\cs{metrics.CR(image\_source, image\_compressed) $\to$ float}] ~
+\end{description}
+
+\subsection{\texttt{framework.noise}}
+
+\begin{lstlisting}[style=python]
+from framework.noise import (GaussianNoise, PoissonNoise,
+                              SaltAndPepperNoise, SpeckleNoise)
+\end{lstlisting}
+
+\begin{description}
+  \item[\cs{GaussianNoise(image\_path, stdev=5, show=True) $\to$ np.ndarray}] ~
+  \item[\cs{PoissonNoise(image\_path, show=True) $\to$ np.ndarray}] ~
+  \item[\cs{SaltAndPepperNoise(image\_path, show=True, number\_of\_pixels=1000) $\to$ np.ndarray}] ~
+  \item[\cs{SpeckleNoise(image\_path, show=True, variance=0.1) $\to$ np.ndarray}] ~
+\end{description}
+
+\subsection{\texttt{framework.smooth}}
+
+\begin{lstlisting}[style=python]
+from framework.smooth import (Mean_filter, Median_filter,
+                               Gaussian_filter, Bilateral_filter)
+\end{lstlisting}
+
+\begin{description}
+  \item[\cs{Mean\_filter(image\_path, k, show=True) $\to$ np.ndarray}] ~
+  \item[\cs{Median\_filter(image\_path, k, show=True) $\to$ np.ndarray}] ~
+  \item[\cs{Gaussian\_filter(image\_path, k, show=True) $\to$ np.ndarray}] ~
+  \item[\cs{Bilateral\_filter(image\_path, k, show=True) $\to$ np.ndarray}] ~
+\end{description}
+
+\subsection{\texttt{test/db}}
+
+\begin{lstlisting}[style=python]
+import db  # from the test/ directory
+\end{lstlisting}
+
+\begin{description}
+  \item[\cs{db.create\_table() $\to$ None}] ~
+  \item[\cs{db.add\_result(pwd, original\_image, algorithm, psnr, ssim, cr, k, m, height, width) $\to$ None}] ~
+  \item[\cs{db.get\_all\_results() $\to$ List[Tuple]}] ~
+  \item[\cs{db.get\_result\_by\_id(result\_id) $\to$ Optional[Tuple]}] ~
+  \item[\cs{db.get\_result\_by\_alg(alg) $\to$ List[Tuple]}] ~
+  \item[\cs{db.delete\_result(result\_alg) $\to$ None}] ~
+  \item[\cs{db.delete\_all() $\to$ None}] ~
+\end{description}
+
+% =============================================================================
+\section{Authors}
+% =============================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Author & GitHub & Components \\
+  \midrule
+  Vladislav Gerda       & \href{https://github.com/hitfot}{@hitfot}       & OMP, CoSaMP, DCT, Metrics, Noise \\
+  Grigory Demchenko     & \href{https://github.com/Pumukun}{@Pumukun}     & SP, BRGP, ImageCS \\
+  Anastasia Kocherygina & \href{https://github.com/somniiium}{@somniiium} & --- \\
+  Alina Sabitova        & \href{https://github.com/AlinaSAB}{@AlinaSAB}   & --- \\
+  Mikhail Shibanov      & \href{https://github.com/Kar1ch}{@Kar1ch}       & Database (db.py) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
