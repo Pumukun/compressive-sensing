@@ -1,55 +1,17 @@
-import numpy as np
-from matplotlib import pyplot as plt
-import cv2
+#!/usr/bin/env python3
+'''
+Run the SP algorithm. A thin wrapper around run_tests.py, where all the logic lives.
 
-from framework import ImageCS, sp, dct
+    python sp_test.py --K 10 20 --jobs 4
+'''
+import sys
+from pathlib import Path
 
-#M = [32, 64, 128, 256]
-#K = [5, 10, 20, 30, 50, 70, 100, 120, 150, 170, 200]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-#M = [128]
-#K = [20]
+from run_tests import main
 
-M = [128]
-K = range(10, 50, 2)
-
-mm = []
-kk = []
-psnr = []
-cr = []
-
-im_cnt = 0
-for m in M:
-    for k in K:
-        print(f"---------- IMAGE {im_cnt} ----------")
-        print("M:   ", m)
-        print("K:   ", k)
-
-        rec = sp("../lena.png", dct(256), m, k)
-        cv2.imwrite(f"lena_sp_M{m}_K{k}.png", rec.get_Image())
-        print(f"CR: {rec.get_CR()}, PSNR: {rec.get_PSNR()}")
-
-        mm.append(m)
-        kk.append(k)
-        psnr.append(rec.get_PSNR())
-        cr.append(rec.get_CR())
-
-        im_cnt += 1
-
-print("mm = ", mm)
-print("kk = ", kk)
-print("psnr = ", psnr)
-print("cr = ", cr)
-
-
-# for i in range(0, len(M)):
-#     plt.plot(kk[i * len(K): (i + 1) * len(K)], cr[i * len(K): (i + 1) * len(K)], label=f"M = {M[i]}", marker="o")
-
-plt.plot(cr, psnr, marker="o")
-
-plt.xlabel("CR")
-plt.ylabel("PSNR")
-plt.grid()
-plt.legend()
-plt.show()
-
+if __name__ == '__main__':
+    # Inserted first so an explicit --algorithms still wins
+    sys.argv[1:1] = ['--algorithms', 'sp']
+    sys.exit(main())

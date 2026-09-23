@@ -1,14 +1,28 @@
+import os
 import sqlite3
-from typing import List, Tuple, Optional, Union
+from pathlib import Path
+from typing import Iterable, List, Tuple, Optional, Sequence, Union
 
-'''by Mikhail Shibanov'''
+# Absolute, so the database does not depend on the current directory
+DB_PATH: Path = Path(
+    os.environ.get('CS_RESULTS_DB', Path(__file__).resolve().parent.parent / 'results.db')
+)
+
+_INSERT_SQL = '''
+    INSERT INTO results (pwd, original_image, algorithm, PSNR, SSIM, CR, K, M, height, width)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+'''
+
 
 def connect_db() -> sqlite3.Connection:
-    '''Подключение к базе данных SQLite results.db'''
-    return sqlite3.connect('results.db')
+    '''Connect to the SQLite database results.db'''
+    conn = sqlite3.connect(DB_PATH)
+    # WAL: readers do not block the writer during parallel runs
+    conn.execute('PRAGMA journal_mode=WAL')
+    return conn
 
 def create_table() -> None:
-    '''Создание таблицы results, если она не существует'''
+    '''Create the results table if it does not exist'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -41,18 +55,31 @@ def add_result(
     height: int,
     width: int
 ) -> None:
-    '''Добавление новой записи в таблицу results'''
+    '''Insert a single row into the results table'''
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO results (pwd, original_image, algorithm, PSNR, SSIM, CR, K, M, height, width)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width))
+    cursor.execute(_INSERT_SQL, (pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width))
     conn.commit()
     conn.close()
 
+def add_results(rows: Iterable[Sequence]) -> None:
+    '''
+    Batched insert. Each row is a tuple
+    (pwd, original_image, algorithm, psnr, ssim, cr, k, m, height, width).
+    '''
+    rows = list(rows)
+    if not rows:
+        return
+
+    conn = connect_db()
+    try:
+        conn.executemany(_INSERT_SQL, rows)
+        conn.commit()
+    finally:
+        conn.close()
+
 def get_all_results() -> List[Tuple]:
-    '''Получение всех записей из таблицы results'''
+    '''Fetch every row from the results table'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results')
@@ -61,7 +88,7 @@ def get_all_results() -> List[Tuple]:
     return results
 
 def get_result_by_id(result_id: int) -> Optional[Tuple]:
-    '''Получение записи по ID'''
+    '''Fetch a single row by ID'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results WHERE id = ?', (result_id,))
@@ -70,7 +97,7 @@ def get_result_by_id(result_id: int) -> Optional[Tuple]:
     return result
 
 def get_result_by_alg(alg: str) -> List[Tuple]:
-    '''Получение всех записей для указанного алгоритма'''
+    '''Fetch every row for the given algorithm'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM results WHERE algorithm = ?', (alg,))
@@ -89,7 +116,7 @@ def update_result(
     height: int,
     width: int
 ) -> None:
-    '''Обновление записи по её ID'''
+    '''Update a row by its ID'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -101,7 +128,7 @@ def update_result(
     conn.close()
 
 def delete_result(result_alg: str) -> None:
-    '''Удаление всех записей для указанного алгоритма'''
+    '''Delete every row for the given algorithm'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM results WHERE algorithm = ?', (result_alg,))
@@ -109,7 +136,7 @@ def delete_result(result_alg: str) -> None:
     conn.close()
 
 def delete_all() -> None:
-    '''Удаление всех записей из таблицы results'''
+    '''Delete every row from the results table'''
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM results')
