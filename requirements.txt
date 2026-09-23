@@ -1,18 +1,17 @@
-contourpy==1.3.1
-cycler==0.12.1
-fonttools==4.56.0
-imageio==2.37.0
-kiwisolver==1.4.8
-lazy_loader==0.4
-matplotlib==3.10.1
-networkx==3.4.2
-numpy==2.2.3
-opencv-python==4.11.0.86
-packaging==24.2
-pillow==11.1.0
-pyparsing==3.2.1
-python-dateutil==2.9.0.post0
-scikit-image==0.25.2
-scipy==1.15.2
-six==1.17.0
-tifffile==2025.2.18
+# Прямые зависимости проекта. Транзитивные (contourpy, cycler, fonttools,
+# kiwisolver, lazy_loader, networkx, packaging, pyparsing, python-dateutil,
+# six, tifffile, imageio) pip разрешает сам - раньше они были перечислены
+# здесь с точными пинами, из-за чего установка ломалась на новых Python.
+#
+# Нижние границы, а не ==: numpy==2.2.3 не имеет колёс под Python 3.14
+# и не собирается из исходников.
+#
+# Проверено на Python 3.14 с numpy 2.5.3, opencv 5.0.0, scikit-image 0.26.0.
+# Минимальная версия Python: 3.9.
+
+numpy>=1.24
+scipy>=1.10
+opencv-python>=4.8
+scikit-image>=0.21
+matplotlib>=3.7
+pillow>=10.0
