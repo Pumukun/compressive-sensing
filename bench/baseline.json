@@ -1,0 +1,194 @@
+{
+  "brgp|4.1.05.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.0605,
+    "seconds": 0.648,
+    "ssim": 0.412998
+  },
+  "brgp|4.1.05.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.9022,
+    "seconds": 3.522,
+    "ssim": 0.397136
+  },
+  "brgp|boat.512.png|M256|K10": {
+    "cr": 51.1986,
+    "psnr": 19.878,
+    "seconds": 2.033,
+    "ssim": 0.349937
+  },
+  "brgp|boat.512.png|M256|K20": {
+    "cr": 25.5993,
+    "psnr": 21.9722,
+    "seconds": 10.911,
+    "ssim": 0.423146
+  },
+  "brgp|house.png|M256|K10": {
+    "cr": 51.2,
+    "psnr": 19.7035,
+    "seconds": 2.098,
+    "ssim": 0.378831
+  },
+  "brgp|house.png|M256|K20": {
+    "cr": 25.6,
+    "psnr": 21.454,
+    "seconds": 11.291,
+    "ssim": 0.436194
+  },
+  "brgp|lena.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.031,
+    "seconds": 0.629,
+    "ssim": 0.447623
+  },
+  "brgp|lena.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.9661,
+    "seconds": 3.554,
+    "ssim": 0.496954
+  },
+  "cosamp|4.1.05.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.1742,
+    "seconds": 0.777,
+    "ssim": 0.42626
+  },
+  "cosamp|4.1.05.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.9695,
+    "seconds": 25.316,
+    "ssim": 0.399968
+  },
+  "cosamp|boat.512.png|M256|K10": {
+    "cr": 51.1986,
+    "psnr": 20.001,
+    "seconds": 0.702,
+    "ssim": 0.356079
+  },
+  "cosamp|boat.512.png|M256|K20": {
+    "cr": 25.5993,
+    "psnr": 22.2043,
+    "seconds": 8.945,
+    "ssim": 0.438955
+  },
+  "cosamp|house.png|M256|K10": {
+    "cr": 51.2,
+    "psnr": 19.8184,
+    "seconds": 0.736,
+    "ssim": 0.38029
+  },
+  "cosamp|house.png|M256|K20": {
+    "cr": 25.6,
+    "psnr": 21.6487,
+    "seconds": 6.657,
+    "ssim": 0.448876
+  },
+  "cosamp|lena.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.2408,
+    "seconds": 0.515,
+    "ssim": 0.464345
+  },
+  "cosamp|lena.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.9801,
+    "seconds": 21.752,
+    "ssim": 0.500472
+  },
+  "omp|4.1.05.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 20.7607,
+    "seconds": 0.132,
+    "ssim": 0.400034
+  },
+  "omp|4.1.05.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.3909,
+    "seconds": 0.337,
+    "ssim": 0.380209
+  },
+  "omp|boat.512.png|M256|K10": {
+    "cr": 51.1986,
+    "psnr": 19.8217,
+    "seconds": 0.392,
+    "ssim": 0.35179
+  },
+  "omp|boat.512.png|M256|K20": {
+    "cr": 25.5993,
+    "psnr": 21.7485,
+    "seconds": 1.021,
+    "ssim": 0.414032
+  },
+  "omp|house.png|M256|K10": {
+    "cr": 51.2,
+    "psnr": 19.6054,
+    "seconds": 0.401,
+    "ssim": 0.374155
+  },
+  "omp|house.png|M256|K20": {
+    "cr": 25.6,
+    "psnr": 21.2631,
+    "seconds": 1.041,
+    "ssim": 0.423756
+  },
+  "omp|lena.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 20.6631,
+    "seconds": 0.128,
+    "ssim": 0.432925
+  },
+  "omp|lena.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 21.6209,
+    "seconds": 0.334,
+    "ssim": 0.480109
+  },
+  "sp|4.1.05.png|M128|K10": {
+    "cr": 12.8,
+    "psnr": 21.5974,
+    "seconds": 0.288,
+    "ssim": 0.411926
+  },
+  "sp|4.1.05.png|M128|K20": {
+    "cr": 6.4,
+    "psnr": 22.1177,
+    "seconds": 2.224,
+    "ssim": 0.401749
+  },
+  "sp|boat.512.png|M256|K10": {
+    "cr": 25.5993,
+    "psnr": 20.7006,
+    "seconds": 1.028,
+    "ssim": 0.370568
+  },
+  "sp|boat.512.png|M256|K20": {
+    "cr": 12.7997,
+    "psnr": 22.751,
+    "seconds": 7.464,
+    "ssim": 0.461271
+  },
+  "sp|house.png|M256|K10": {
+    "cr": 25.6,
+    "psnr": 20.3575,
+    "seconds": 1.056,
+    "ssim": 0.37767
+  },
+  "sp|house.png|M256|K20": {
+    "cr": 12.8,
+    "psnr": 22.0334,
+    "seconds": 6.997,
+    "ssim": 0.456245
+  },
+  "sp|lena.png|M128|K10": {
+    "cr": 12.8,
+    "psnr": 21.5874,
+    "seconds": 0.287,
+    "ssim": 0.476953
+  },
+  "sp|lena.png|M128|K20": {
+    "cr": 6.4,
+    "psnr": 22.1972,
+    "seconds": 2.252,
+    "ssim": 0.511921
+  }
+}
