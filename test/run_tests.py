@@ -57,7 +57,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(TEST_DIR))
 
 import db  # noqa: E402
-from framework import dct, omp, sp, cosamp, brgp  # noqa: E402
+from framework import dct, omp, sp, cosamp, brgp, iht, lamp  # noqa: E402
 
 # CoSaMP orders its arguments differently: (path, matrix, s, M), s playing K
 ALGORITHMS = {
@@ -65,6 +65,8 @@ ALGORITHMS = {
     'sp': lambda p, psi, m, k, **kw: sp(p, psi, m, k, **kw),
     'cosamp': lambda p, psi, m, k, **kw: cosamp(p, psi, k, m, **kw),
     'brgp': lambda p, psi, m, k, **kw: brgp(p, psi, m, k, **kw),
+    'iht': lambda p, psi, m, k, **kw: iht(p, psi, m, k, **kw),
+    'lamp': lambda p, psi, m, k, **kw: lamp(p, psi, m, k, **kw),
 }
 
 

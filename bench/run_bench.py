@@ -25,7 +25,7 @@ import cv2
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from framework import dct, omp, sp, cosamp, brgp  # noqa: E402
+from framework import dct, omp, sp, cosamp, brgp, iht, lamp  # noqa: E402
 
 SEED = 42
 BASELINE_PATH = Path(__file__).resolve().parent / 'baseline.json'
@@ -45,6 +45,8 @@ ALGORITHMS = {
     'sp': lambda p, psi, m, k: sp(p, psi, m, k, seed=SEED),
     'cosamp': lambda p, psi, m, k: cosamp(p, psi, k, m, seed=SEED),
     'brgp': lambda p, psi, m, k: brgp(p, psi, m, k, seed=SEED),
+    'iht': lambda p, psi, m, k: iht(p, psi, m, k, seed=SEED),
+    'lamp': lambda p, psi, m, k: lamp(p, psi, m, k, seed=SEED),
 }
 
 

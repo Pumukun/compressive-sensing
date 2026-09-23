@@ -95,6 +95,102 @@
     "seconds": 21.752,
     "ssim": 0.500472
   },
+  "iht|4.1.05.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 19.7808,
+    "seconds": 0.095,
+    "ssim": 0.360644
+  },
+  "iht|4.1.05.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 20.4503,
+    "seconds": 0.144,
+    "ssim": 0.355507
+  },
+  "iht|boat.512.png|M256|K10": {
+    "cr": 51.1986,
+    "psnr": 18.7295,
+    "seconds": 0.564,
+    "ssim": 0.302528
+  },
+  "iht|boat.512.png|M256|K20": {
+    "cr": 25.5993,
+    "psnr": 20.425,
+    "seconds": 0.597,
+    "ssim": 0.355396
+  },
+  "iht|house.png|M256|K10": {
+    "cr": 51.2,
+    "psnr": 18.3955,
+    "seconds": 0.576,
+    "ssim": 0.316095
+  },
+  "iht|house.png|M256|K20": {
+    "cr": 25.6,
+    "psnr": 20.0988,
+    "seconds": 0.603,
+    "ssim": 0.371815
+  },
+  "iht|lena.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 19.4746,
+    "seconds": 0.1,
+    "ssim": 0.386619
+  },
+  "iht|lena.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 20.2394,
+    "seconds": 0.11,
+    "ssim": 0.419432
+  },
+  "lamp|4.1.05.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.6432,
+    "seconds": 1.428,
+    "ssim": 0.465254
+  },
+  "lamp|4.1.05.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 22.0597,
+    "seconds": 1.982,
+    "ssim": 0.398146
+  },
+  "lamp|boat.512.png|M256|K10": {
+    "cr": 51.1986,
+    "psnr": 20.1167,
+    "seconds": 3.577,
+    "ssim": 0.366678
+  },
+  "lamp|boat.512.png|M256|K20": {
+    "cr": 25.5993,
+    "psnr": 22.6202,
+    "seconds": 11.08,
+    "ssim": 0.466983
+  },
+  "lamp|house.png|M256|K10": {
+    "cr": 51.2,
+    "psnr": 19.9475,
+    "seconds": 3.489,
+    "ssim": 0.391694
+  },
+  "lamp|house.png|M256|K20": {
+    "cr": 25.6,
+    "psnr": 22.0402,
+    "seconds": 11.194,
+    "ssim": 0.479865
+  },
+  "lamp|lena.png|M128|K10": {
+    "cr": 25.6,
+    "psnr": 21.7356,
+    "seconds": 1.368,
+    "ssim": 0.495719
+  },
+  "lamp|lena.png|M128|K20": {
+    "cr": 12.8,
+    "psnr": 22.0269,
+    "seconds": 2.003,
+    "ssim": 0.500949
+  },
   "omp|4.1.05.png|M128|K10": {
     "cr": 25.6,
     "psnr": 20.7607,
