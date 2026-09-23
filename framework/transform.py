@@ -1,22 +1,24 @@
 import numpy as np
+import math
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=None)
 def dct(N: int) -> np.ndarray:
     '''
-    Функция создания квадратной матрицы dct.
-        N - размер матрицы.
-    by Vladislav Gerda
+    Build a square DCT basis matrix of size N.
+
+    Cached, since the matrix depends only on N. The result is shared by every
+    caller and therefore marked read-only.
     '''
-    mat_dct_1d: np.ndarray = np.zeros((N, N))
-    v = range(N)
+    n = np.arange(N)
 
-    for k in range(0, N):  
-        dct_1d = np.cos(np.dot(v, k * math.pi / N))
+    # mat[i, k] = cos(i * k * pi / N)
+    mat_dct_1d: np.ndarray = np.cos(np.outer(n, n) * (math.pi / N))
 
-        if k > 0:
-            dct_1d = dct_1d - np.mean(dct_1d)
+    mat_dct_1d[:, 1:] -= mat_dct_1d[:, 1:].mean(axis=0, keepdims=True)
+    mat_dct_1d /= np.linalg.norm(mat_dct_1d, axis=0, keepdims=True)
 
-        mat_dct_1d[:, k] = dct_1d / np.linalg.norm(dct_1d)
-
+    mat_dct_1d.flags.writeable = False
     return mat_dct_1d
-
-

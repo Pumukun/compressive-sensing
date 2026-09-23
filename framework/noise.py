@@ -4,19 +4,17 @@ from matplotlib import pyplot as plt
 from random import randint 
 import numpy.typing as npt
 
-'''by Vladislav Gerda'''
-
 def GaussianNoise(image_path: str, stdev: int = 5, show: bool = True) -> npt.NDArray[np.uint8]:
     '''
-    Добавляет гауссов шум к изображению и применяет гауссово размытие
+    Adds Gaussian noise to the image and applies a Gaussian blur
 
     Args:
-        image_path: Путь к изображению
-        stdev: Стандартное отклонение для гауссова размытия
-        show: Показать оригинальное и зашумленное изображение pyplot
+        image_path: path to the image
+        stdev: standard deviation of the Gaussian blur
+        show: display the original and the noisy image with pyplot
 
     Returns:
-        Зашумленное изображение в виде массива numpy.
+        The noisy image as a numpy array.
     '''
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
     blur = cv.GaussianBlur(image, (stdev, stdev), 0)
@@ -32,14 +30,14 @@ def GaussianNoise(image_path: str, stdev: int = 5, show: bool = True) -> npt.NDA
 
 def PoissonNoise(image_path: str, show: bool = True) -> npt.NDArray[np.uint8]:
     '''
-    Добавляет пуассоновский шум к изображению
+    Adds Poisson noise to the image
 
     Args:
-        image_path: Путь к изображению
-        show: Показать оригинальное и зашумленное изображение pyplot
+        image_path: path to the image
+        show: display the original and the noisy image with pyplot
 
     Returns:
-        Зашумленное изображение в виде массива numpy
+        The noisy image as a numpy array
     '''
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
 
@@ -56,15 +54,15 @@ def PoissonNoise(image_path: str, show: bool = True) -> npt.NDArray[np.uint8]:
 
 def SaltAndPepperNoise(image_path: str, show: bool = True, number_of_pixels: int = 1000) -> npt.NDArray[np.uint8]:
     '''
-    Добавляет шум типа "соль и перец" к изображению
+    Adds salt-and-pepper noise to the image
 
     Args:
-        image_path: Путь к изображению
-        show: Показать оригинальное и зашумленное изображение pyplot
-        number_of_pixels: Количество пикселей для зашумления
+        image_path: path to the image
+        show: display the original and the noisy image with pyplot
+        number_of_pixels: how many pixels to corrupt
 
     Returns:
-        Зашумленное изображение в виде массива numpy
+        The noisy image as a numpy array
     '''
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
     noisy = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
@@ -87,15 +85,15 @@ def SaltAndPepperNoise(image_path: str, show: bool = True, number_of_pixels: int
 
 def SpeckleNoise(image_path: str, show: bool = True, variance: float = 0.1) -> npt.NDArray[np.uint8]:
     '''
-    Добавляет speckle шум к изображению
+    Adds speckle noise to the image
 
     Args:
-        image_path: Путь к изображению.
-        show: Показать оригинальное и зашумленное изображение pyplot
-        variance: Дисперсия шума.
+        image_path: path to the image.
+        show: display the original and the noisy image with pyplot
+        variance: noise variance.
 
     Returns:
-        Зашумленное изображение в виде массива numpy
+        The noisy image as a numpy array
     '''
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
     shape = (256, 256)

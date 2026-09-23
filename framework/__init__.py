@@ -4,5 +4,6 @@ from .cosamp import cosamp
 from .sp import sp
 from .brgp import brgp
 
+import framework.measurement
 import framework.metrics
 from framework.utils import *
